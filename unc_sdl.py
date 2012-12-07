@@ -57,7 +57,7 @@ class UNC_SDL(dense_design_matrix.DenseDesignMatrix):
         stft_width = 50/1000.0
         stft_stride = 50/1000.0
         stft_sample_width = int(stft_width*sample_rate)
-        downsample_factor = 3
+        downsample_factor = 1
 
         # in seconds
         stft_window_width = 15.0
@@ -160,18 +160,20 @@ class UNC_SDL(dense_design_matrix.DenseDesignMatrix):
             del windows
             del meta
             # end for night
-        print >> sys.stderr, "Gathering all windows..."
-        topo_view = numpy.concatenate(all_windows)
         labels = numpy.concatenate(all_labels)
-        del all_windows
         del all_labels
 
-        print >> sys.stderr, "Saving precomputed windows to %s..." % all_windows_name
+        print >> sys.stderr, "Gathering all examples..."
+        n_examples = sum([w.shape[0] for w in all_windows])
+        window_shape = all_windows[0].shape[1:]
+        print >> sys.stderr, "Saving %d examples of %s to %s" % (n_examples, str(window_shape), all_windows_name)
+        topo_view = numpy.memmap(all_windows_name, dtype='float32', mode='w+', shape=(n_examples,)+window_shape)
+        i = 0
+        for w in all_windows:
+            topo_view[i:i+w.shape[0]] = w
+            i += w.shape[0]
         all_meta = {'all_windows.shape': topo_view.shape, 'all_labels': labels}
         pickle.dump(all_meta, file(all_meta_name, 'w'))
-        mm = numpy.memmap(all_windows_name, dtype='float32', mode='w+', shape=topo_view.shape)
-        mm[:] = topo_view[:]
-        topo_view = mm
         vc = SimpleViewConverter(topo_view.shape[1:])
         super(UNC_SDL,self).__init__(X=vc.topo_view_to_design_mat(topo_view), y=labels, view_converter=vc)
 
@@ -182,9 +184,6 @@ class SimpleViewConverter(object):
     def weights_view_shape(self): return self.shape
 
     def design_mat_to_topo_view(self, X):
-        #x = X.view()
-        #x.shape = (X.shape[0],)+self.shape
-        #return x
         return numpy.reshape(X, (X.shape[0],)+self.shape)
 
     def design_mat_to_weights_view(self, X):
