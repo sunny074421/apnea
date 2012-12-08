@@ -145,8 +145,8 @@ class UNC_SDL(dense_design_matrix.DenseDesignMatrix):
                 for i in xrange(0, xs.shape[0]-w, s):
                     windows[j] = (downsample(xs[i:i+w],downsample_factor) - xs_min)/(xs_max - xs_min)
                     # label is True if any event occurs during this window
-                    # TODO: may want to make it the middle third, and overlap windows
-                    if any([stft_stride*i <= e and e <= stft_stride*(i+w)+stft_width for e in events]):
+                    # TODO: may want to make it the middle third or so
+                    if any([stft_stride*i <= e and e <= stft_stride*i+stft_width for e in events]):
                         labels[j] = [1,0]
                     else:
                         labels[j] = [0,1]
@@ -216,6 +216,6 @@ def downsample(X, sampling_factor):
 
 if __name__ == "__main__":
     u = UNC_SDL()
-    scipy.io.savemat('/srv/data/apnea/data.mat',{'X':u.X, 'y':u.y})
+    #scipy.io.savemat('/srv/data/apnea/data.mat',{'X':u.X, 'y':u.y})
 
 
