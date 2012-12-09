@@ -177,6 +177,16 @@ class UNC_SDL(dense_design_matrix.DenseDesignMatrix):
         vc = SimpleViewConverter(topo_view.shape[1:])
         super(UNC_SDL,self).__init__(X=vc.topo_view_to_design_mat(topo_view), y=labels, view_converter=vc)
 
+class UNC_SDL_one(dense_design_matrix.DenseDesignMatrix):
+    def __init__(self
+            , path="/srv/data/apnea"
+            , name="303-nopap"):
+        meta = pickle.load(file('%s/%s-meta.pck'%(path,name),'r'))
+        X = numpy.memmap('%s/%s-windows.dat'%(path,name), dtype='float32', mode='r', shape=meta['windows.shape'])
+        y = meta['labels']
+        vc = SimpleViewConverter(X.shape[1:])
+        super(UNC_SDL_one,self).__init__(X=vc.topo_view_to_design_mat(X), y=y, view_converter=vc)
+
 class SimpleViewConverter(object):
     def __init__(self,shape):
         self.shape = shape

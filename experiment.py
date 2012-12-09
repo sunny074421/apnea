@@ -1,193 +1,190 @@
-import unc_sdl
-
-from pylearn2.autoencoder import Autoencoder, DenoisingAutoencoder
-from pylearn2.models.rbm import RBM, GaussianBinaryRBM
-from pylearn2.corruption import BinomialCorruptor
-from pylearn2.corruption import GaussianCorruptor
-from pylearn2.training_algorithms.sgd import SGD, AnnealedLearningRate
-from pylearn2.costs.autoencoder import MeanSquaredReconstructionError
-from pylearn2.training_algorithms.sgd import EpochCounter
-from pylearn2.classifier import LogisticRegressionLayer
-from pylearn2.datasets.dense_design_matrix import DenseDesignMatrix
-from pylearn2.datasets import preprocessing
-from pylearn2.energy_functions.rbm_energy import GRBM_Type_1
-from pylearn2.base import Block, StackedBlocks
-from pylearn2.datasets.transformer_dataset import TransformerDataset
-from pylearn2.costs.ebm_estimation import SMD
-from pylearn2.termination_criteria import MonitorBased
-from pylearn2.training_algorithms.sgd import MonitorBasedLRAdjuster
-from pylearn2.train_extensions import TrainExtension
-from pylearn2.costs.cost import CrossEntropy
-from pylearn2.train import Train
-import pylearn2.utils.serial as serial
-
 import numpy
-import numpy.random
-import sys
+import scipy
+import theano.tensor as T
+from theano import shared
+# NB: cPickle fucks up some Theano structures here, apparently
+import pickle
 import os
-import cPickle as pickle
 
-def get_autoencoder(structure):
-    n_input, n_output = structure
-    config = {
-        'nhid': n_output,
-        'nvis': n_input,
-        'tied_weights': True,
-        'act_enc': 'tanh',
-        'act_dec': 'sigmoid',
-        'irange': 0.001,
-        }
-    return Autoencoder(**config)
+from deeplearning.DBN import DBN
 
-def get_denoising_autoencoder(structure):
-    n_input, n_output = structure
-    corruptor = BinomialCorruptor(corruption_level=0.5)
-    config = {
-        'corruptor': corruptor,
-        'nvis': n_input,
-        'nhid': n_output,
-        'tied_weights': True,
-        'act_enc': 'tanh',
-        'act_dec': 'sigmoid',
-        'irange': 0.001,
-        }
-    return DenoisingAutoencoder(**config)
+def load_datasets(path):
+    """Returns [train_set, valid_set, test_set, pretrain_set].
+    Each is a tuple (X,y) except for pretrain_set, which is just an X."""
+    datasets = 4*[None]
 
-def get_brbm(structure):
-    n_input, n_output = structure
-    config = {
-        'nvis': n_input,
-        'nhid': n_output,
-        'irange': 0.05,
-        }
-    return RBM(**config)
+    X = numpy.load(path+'/X.npy', mmap_mode='r')
+    y = numpy.load(path+'/y.npy')
 
-def get_grbm(structure):
-    n_input, n_output = structure
-    config = {
-        'nvis': n_input,
-        'nhid': n_output,
-        'irange': 0.05,
-        'energy_function_class': GRBM_Type_1,
-        'learn_sigma': True,
-        'init_sigma': 0.4,
-        #'init_bias_hid': -2.0,
-        'mean_vis': False,
-        'sigma_lr_scale': 1e-3,
-        }
-    return GaussianBinaryRBM(**config)
+    # deeplearning.logistic_sgd expects int32
+    y = y.astype('int32')
 
-def get_logistic_regressor(structure):
-    n_input, n_output = structure
-    return LogisticRegressionLayer(nvis=n_input, nclasses=n_output)
+    assert X.shape[0] == y.shape[0]
+    assert len(y.shape) == 1
 
-def get_layer_trainer_logistic(layer, trainset, save_path):
-    config = {
-        'learning_rate': 0.1,
-        'cost': CrossEntropy(),
-        'batch_size': 50,
-        'monitoring_batches': 10,
-        'monitoring_dataset': trainset,
-        #'termination_criterion': EpochCounter(max_epochs=10),
-        'termination_criterion': MonitorBased(prop_decrease=0.01, N=10),
-        'update_callbacks': [AnnealedLearningRate(1)]
-        }
-    train_algo = SGD(**config)
-    model = layer
-    extensions = []
-    return Train(model = model,
-            dataset = trainset,
-            algorithm = train_algo,
-            extensions = extensions,
-            save_path = save_path,
-            save_freq = 1)
+    ####
+    each_set_size = 500
+    pretraining_size = 4000
+    ####
 
-def get_layer_trainer_sgd_autoencoder(layer, trainset):
-    config = {
-        'learning_rate': 0.1,
-        'cost': MeanSquaredReconstructionError(),
-        'batch_size': 10,
-        #'monitoring_batches': 10,
-        #'monitoring_dataset': None,
-        'termination_criterion': EpochCounter(max_epochs=1),
-        }
-    train_algo = SGD(**config)
-    model = layer
-    extensions = None
-    return Train(model = model,
-            algorithm = train_algo,
-            extensions = extensions,
-            dataset = trainset)
+    # Flatten all but the first dimension (examples).
+    # We don't make use of the 2D topology of the input.
+    X = X.reshape((X.shape[0],numpy.product(X.shape[1:])))
 
-def get_layer_trainer_sgd_rbm(layer, trainset, save_path):
-    config = {
-        'learning_rate': 0.1,
-        'cost': SMD(corruptor=GaussianCorruptor(stdev=0.1)),
-        'batch_size': 50,
-        'monitoring_batches': 10,
-        'monitoring_dataset': trainset,
-        'termination_criterion': EpochCounter(max_epochs=1),
-        #'termination_criterion': MonitorBased(prop_decrease=0.01, N=10),
-        }
-    train_algo = SGD(**config)
-    model = layer
-    extensions = [MonitorBasedLRAdjuster()]
-    return Train(model = model,
-            algorithm = train_algo,
-            extensions = extensions,
-            dataset = trainset,
-            save_path = save_path,
-            save_freq = 1)
+    print 'selecting training examples'
+    # Use all the positive examples, then fill up with random examples
+    # TODO: hold out some positive examples
+    selection = y[:]==1
+    selection[numpy.random.choice(y.shape[0], each_set_size-sum(selection), replace=False)] = True
+    datasets[0] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
 
-def train(trainset):
-    #n_input = trainset.get_batch_design(1).shape[1]
-    n_input = 300*300
-    structure = [[n_input,1000],[1000,1000],[1000,1000],[1000,2]]
-    layers = []
-    layers.append(get_grbm(structure[0]))
-    layers.append(get_brbm(structure[1]))
-    layers.append(get_brbm(structure[2]))
-    layers.append(get_logistic_regressor(structure[3]))
+    print 'selecting validation examples'
+    # Use all the positive examples, then fill up with random examples
+    selection = y[:]==1
+    selection[numpy.random.choice(y.shape[0], each_set_size-sum(selection), replace=False)] = True
+    datasets[1] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
 
-    # construct training sets for different layers
-    trainset = [ trainset,
-                TransformerDataset(raw = trainset, transformer = StackedBlocks([layers[0]])),
-                TransformerDataset(raw = trainset, transformer = StackedBlocks(layers[0:2])),
-                TransformerDataset(raw = trainset, transformer = StackedBlocks(layers[0:3])) ]
-    layer_trainers = []
-    layer_trainers.append(get_layer_trainer_sgd_rbm(layers[0], trainset[0], 'layer0.pck'))
-    layer_trainers.append(get_layer_trainer_sgd_rbm(layers[1], trainset[1], 'layer1.pck'))
-    layer_trainers.append(get_layer_trainer_sgd_rbm(layers[2], trainset[2], 'layer2.pck'))
-    layer_trainers.append(get_layer_trainer_logistic(layers[3], trainset[3], 'layer3.pck'))
+    print 'selecting test examples'
+    # Use all the positive examples, then fill up with random examples
+    selection = y[:]==1
+    selection[numpy.random.choice(y.shape[0], each_set_size-sum(selection), replace=False)] = True
+    datasets[2] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
 
-    for layer_trainer in layer_trainers[0:-1]
-        print '*** Unsupervised pretraining: next layer'
-        layer_trainer.main_loop()
+    print 'selecting unsupervised pretraining examples'
+    # Use all the positive examples, then fill up with random examples
+    selection = y[:]==1
+    selection[numpy.random.choice(y.shape[0], pretraining_size-sum(selection), replace=False)] = True
+    datasets[3] = shared(X[selection],borrow=True)
 
-    print '*** Supervised training: final layer'
-    layer_trainers[-1].main_loop()
+    return datasets
 
-class CastAndScale(Block):
-    def perform(self, X):
-        self._params = None
-        return X.astype('float32') / 255.0
+def pretrain(datasets):
+    ####
+    batch_size = 50
+    hidden_layers_sizes = [2000,2000,2000,2000]
+    max_epochs = [20,20,20,20]
+    numpy_rng = numpy.random.RandomState(seed=42)
+    pretrain_lr = 0.1
+    gibbs_steps = 1
+    ####
+    
+    train_set_x = datasets[3]
 
-def main2(trainset, testset):
-    layers = []
-    for i in xrange(0,4):
-        layers.append(pickle.load(file('layer%d.pck'%i,'r')))
-    model = StackedBlocks(layers)
-    z = numpy.zeros(testset.y.shape)
-    for i in xrange(0,testset.num_examples):
-        z[i] = model.perform(testset.X[i].reshape((1,)+testset.X[i].shape))
-    pickle.dump(z,file('z.pck','w'))
+    n_train_batches = int(train_set_x.get_value(borrow=True).shape[0] / batch_size)
+    
+    print 'constructing dbn'
+    dbn = DBN(numpy_rng,
+            n_ins = train_set_x.get_value(borrow=True).shape[1],
+            hidden_layers_sizes = hidden_layers_sizes,
+            n_outs = 2)
+    
+    print 'compiling pretraining functions'
+    pretraining_fns = dbn.pretraining_functions(train_set_x=train_set_x, batch_size=batch_size, k=gibbs_steps)
+    
+    last_cost = -1e10
+    for layer_index in xrange(dbn.n_layers):
+        print 'pretraining layer %d'%(layer_index+1)
+        for epoch in xrange(max_epochs[layer_index]):
+            c = []
+            for batch_index in xrange(n_train_batches):
+                c.append(pretraining_fns[layer_index](index=batch_index,lr=pretrain_lr))
+                #print 'batch %d/%d cost %f'%(batch_index+1,n_train_batches,c[-1])
+            c = numpy.mean(c)
+            print 'layer %d, epoch %d. mean cost: %f'%(layer_index+1,epoch+1,c)
+            # TODO: stop if cost doesn't improve
+            last_cost = c
+
+    return dbn
+
+def finetune(dbn,datasets):
+    ####
+    batch_size = 50
+    finetune_lr = 0.1
+    training_epochs = 10
+    ####
+
+    print 'compiling finetuning functions'
+    train_fn, validate_model, test_model = dbn.build_finetune_functions(
+            datasets=datasets[0:3], batch_size=batch_size,
+            learning_rate=finetune_lr)
+    n_train_batches = int(datasets[0][0].get_value(borrow=True).shape[0] / batch_size)
+
+    # early-stopping parameters
+    patience = 4 * n_train_batches  # look as this many examples regardless
+    patience_increase = 2.    # wait this much longer when a new best is
+                              # found
+    improvement_threshold = 0.995  # a relative improvement of this much is
+                                   # considered significant
+    validation_frequency = min(n_train_batches, patience / 2)
+                                  # go through this many
+                                  # minibatches before checking the network
+                                  # on the validation set; in this case we
+                                  # check every epoch
+
+    best_validation_loss = numpy.inf
+    test_score = 0.
+
+    done_looping = False
+    epoch = 0
+
+    while (epoch < training_epochs) and (not done_looping):
+        epoch = epoch + 1
+        for minibatch_index in xrange(n_train_batches):
+
+            minibatch_avg_cost = train_fn(minibatch_index)
+            iteration = epoch * n_train_batches + minibatch_index
+
+            if (iteration + 1) % validation_frequency == 0:
+
+                validation_losses = validate_model()
+                this_validation_loss = numpy.mean(validation_losses)
+                print('epoch %i, minibatch %i/%i, validation error %f %%' % \
+                      (epoch, minibatch_index + 1, n_train_batches,
+                       this_validation_loss * 100.))
+
+                # if we got the best validation score until now
+                if this_validation_loss < best_validation_loss:
+
+                    #improve patience if loss improvement is good enough
+                    if (this_validation_loss < best_validation_loss *
+                        improvement_threshold):
+                        patience = max(patience, iteration * patience_increase)
+
+                    # save best validation score and iteration number
+                    best_validation_loss = this_validation_loss
+                    best_iter = iteration
+
+                    # test it on the test set
+                    test_losses = test_model()
+                    test_score = numpy.mean(test_losses)
+                    print(('     epoch %i, minibatch %i/%i, test error of '
+                           'best model %f %%') %
+                          (epoch, minibatch_index + 1, n_train_batches,
+                           test_score * 100.))
+
+            if patience <= iteration:
+                done_looping = True
+                break
+
+    print(('Optimization complete with best validation score of %f %%,'
+           'with test performance %f %%') %
+                 (best_validation_loss * 100., test_score * 100.))
+    return dbn
 
 if __name__ == '__main__':
-    fullset = unc_sdl.UNC_SDL()
-    #fullset = TransformerDataset(raw=fullset, transformer=CastAndScale())
-    # TODO: split train, test
-    trainset = fullset
-    testset = fullset
+    path = '/srv/data/apnea'
+    
+    datasets = load_datasets(path)
 
-    train(trainset)
+    if os.path.isfile(path+'/model-pretrained.pkl'):
+        print 'loading model'
+        dbn = pickle.load(file(path+'/model-pretrained.pkl','r'))
+    else:
+        dbn = pretrain(datasets)
+        print 'saving model'
+        pickle.dump(dbn, file(path+'/model-pretrained.pkl','w'))
+
+    finetune(dbn,datasets)
+    print 'saving model'
+    pickle.dump(dbn, file(path+'/model-finetuned.pkl','w'))
 
