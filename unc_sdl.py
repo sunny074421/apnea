@@ -8,16 +8,84 @@ from scipy.io import wavfile, loadmat
 from datetime import datetime, timedelta
 from numpy.lib.format import open_memmap
 
+# Signals of interest (and their class IDs)
+classes = { 'RERA': 1
+          , 'OAa':  2
+          , 'CAa':  3
+          , 'OHa':  4
+          , 'CHa':  5
+          , 'OA': 6
+          , 'CA': 7
+          , 'OH': 8
+          # no examples of CH anyway
+          #, 'CH': 9
+          }
 sample_rate = 12000
-stft_width = 50/1000.0
+stft_width = 100/1000.0
 stft_stride = 50/1000.0
-stft_sample_width = int(stft_width*sample_rate)
+stft_take_coefficients = 300
 downsample_factor = 1
 # in seconds
 stft_window_width = 15.0
-stft_window_stride = stft_window_width/2.0
+stft_window_stride = stft_window_width/3.0
+# Events occurring closer than this many seconds to the window's borders are ignored.
+stft_window_tolerance = 0.0 # disabled for now, since it seems to screw up training on the synth set
 
-def compute_windows(samples, events):
+def load_datasets(path, sizes=(800,800,800,2000), topological=False):
+    """Returns [train_set, valid_set, test_set, pretrain_set].
+    Each is a tuple (X,y) except for pretrain_set, which is just an X."""
+    from theano import shared
+
+    datasets = 4*[None]
+
+    X = numpy.load(path+'/X.npy', mmap_mode='r')
+    y = numpy.load(path+'/y.npy')
+
+    # deeplearning.logistic_sgd expects int32
+    y = y.astype('int32')
+
+    assert X.shape[0] == y.shape[0]
+    assert len(y.shape) == 1
+
+    if not topological:
+        # Flatten all but the first dimension (examples).
+        X = X.reshape((X.shape[0],numpy.product(X.shape[1:])))
+
+    # Try to choose an equal number of examples from each class.
+    def choose(size):
+        c = numpy.concatenate([numpy.random.choice((y==i).nonzero()[0], min(size/len(classes), sum(y==i))) for i in [0]+classes.values()])
+        # fill up the quota with negative examples
+        if len(c) < size:
+            c = numpy.concatenate([c, numpy.random.choice((y==0).nonzero()[0], size-len(c))])
+        return c
+
+    print '%d total, %d positive, %d negative' % (y.shape[0],(y==0).nonzero()[0].shape[0],(y!=0).nonzero()[0].shape[0])
+    print 'counts by class: ', numpy.bincount(y,minlength=len(classes))
+
+    print 'selecting training examples'
+    selection = choose(sizes[0])
+    numpy.random.shuffle(selection)
+    datasets[0] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
+
+    print 'selecting validation examples'
+    selection = choose(sizes[1])
+    numpy.random.shuffle(selection)
+    datasets[1] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
+
+    print 'selecting test examples'
+    selection = choose(sizes[2])
+    numpy.random.shuffle(selection)
+    datasets[2] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
+
+    print 'selecting unsupervised pretraining examples'
+    # Randomly select examples
+    selection = numpy.random.choice(y.shape[0], sizes[3])
+    numpy.random.shuffle(selection)
+    datasets[3] = shared(X[selection],borrow=True)
+
+    return datasets
+
+def compute_windows(samples, times):
     # Take the Short-Time Fourier Transform (STFT) of the samples.
     print >> sys.stderr, "Computing STFT..."
     xs = numpy.array(stft(samples, sample_rate, framesz=stft_width, hop=stft_stride))
@@ -26,6 +94,8 @@ def compute_windows(samples, events):
     print >> sys.stderr, "Creating windows of STFT..."
     # discard DC offset (1st FFT coefficient)
     xs = xs[:,1:]
+    # discard all but the first n coefficients
+    xs = xs[:,0:stft_take_coefficients]
     # get normalization parameters
     xs_min = numpy.min(xs)
     xs_max = numpy.max(xs)
@@ -40,13 +110,15 @@ def compute_windows(samples, events):
     j = 0
     for i in window_start_indices:
         windows[j] = (downsample(xs[i:i+window_width_rows],downsample_factor) - xs_min)/(xs_max - xs_min)
-        # label is True if any event occurs during this window
-        window_start_time = stft_stride*i
-        window_end_time = stft_stride*(i+window_width_rows)
-        if any([window_start_time <= e and e <= window_end_time for e in events]):
-            labels[j] = 1
-        else:
-            labels[j] = 0
+        # label is True if any event occurs during this window and not within a certain distance of the edges
+        window_start_time = stft_stride*i + stft_window_tolerance
+        window_end_time = stft_stride*(i+window_width_rows) - stft_window_tolerance
+        labels[j] = 0
+        for signal in times:
+            if any([window_start_time <= e and e <= window_end_time for e in times[signal]]):
+                if labels[j] != 0:
+                    print >> sys.stderr, "Warning: overlapping events %d, %d near %f s"%(labels[j],classes[signal],window_start_time)
+                labels[j] = classes[signal]
         j = j+1
     return (windows, labels)
 
@@ -54,7 +126,7 @@ def build_synthetic_dataset(path='/srv/data/apnea/synthetic'):
     nights = ['synth1-allnegative', 'synth1-apnea']
     event_times = {
             'synth1-allnegative': [],
-            'synth1-apnea': [33, 48, 142, 220, 276]
+            'synth1-apnea': sum([map(lambda t: t+300*i,[33, 48, 142, 220, 276]) for i in range(10)],[])
             }
     all_windows = []
     all_labels = []
@@ -70,9 +142,9 @@ def build_synthetic_dataset(path='/srv/data/apnea/synthetic'):
         assert samples.dtype == numpy.dtype('int16'), "Expected 16-bit samples: %s" % wav_name
 
         # Each element here is an offset (in seconds) from the beginning of the wav file.
-        events = event_times[night]
+        times = {'RERA': event_times[night]}
         
-        windows, labels = compute_windows(samples, events)
+        windows, labels = compute_windows(samples, times)
         del samples
         all_windows.append(windows)
         all_labels.append(labels)
@@ -128,13 +200,6 @@ def build_dataset(path='/srv/data/apnea'):
             }
 
     def parse_time(s): return datetime.strptime(s,'%Y-%m-%d %H:%M:%S')
-    # Signals of interest:
-    signals = ['RERA' # Respiratory Effort Related Arousal
-              ,'OAa'  # Obstructive Apnea with arousal
-              ,'CAa'  # Central Apnea with arousal
-              ,'OHa'  # Obstructive Hypopnea with arousal
-              ,'CHa'  # Central Hypopnea with arousal
-              ]
     end_times = {x: parse_time(nominal_times[x][1]) for x in nominal_times}
 
     # TODO: use unlabeled nights, too
@@ -142,8 +207,7 @@ def build_dataset(path='/srv/data/apnea'):
     total_examples = 0
     X_names = []
     y_names = []
-    #for night in labeled_nights:
-    for night in nights:
+    for night in labeled_nights:
 
         basename = path+'/'+night
         wav_name = basename+'.wav'
@@ -164,16 +228,13 @@ def build_dataset(path='/srv/data/apnea'):
         actual_start_time  = end_time - actual_length
         assert actual_start_time < nominal_start_time
 
-        # For now, just glob together all the signals.
-        # This gives us the data to predict the Respiratory Disturbance Index (RDI):
-        #   RDI = (RERAs + Hypopneas + Apneas) / Total Sleep Time (in hours)
-        times = sum([map(parse_time, numpy.hstack(mat[signal].flatten())) 
-                        if len(mat[signal]) > 0 else []
-                     for signal in signals], [])
-        # Each element here is an offset (in seconds) from the beginning of the wav file.
-        events = [(t - actual_start_time).total_seconds() for t in times]
+        # elements here are offsets in seconds from the beginning of the wav file.
+        def to_seconds(t): return (parse_time(t) - actual_start_time).total_seconds()
+        times = {signal: map(to_seconds, numpy.hstack(mat[signal].flatten()))
+                         if len(mat[signal]) > 0 else []
+                    for signal in classes}
         
-        X, y = compute_windows(samples, events)
+        X, y = compute_windows(samples, times)
         del samples
 
         assert window_shape is None or window_shape == X.shape[1:]
@@ -222,6 +283,7 @@ def downsample(X, sampling_factor):
     return scipy.signal.convolve2d(X,kernel,mode='same')[::sampling_factor,::sampling_factor]
 
 if __name__ == "__main__":
+    # Rebuild both datasets
     build_synthetic_dataset()
     build_dataset()
 

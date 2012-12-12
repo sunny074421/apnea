@@ -1,0 +1,638 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Detecting sleep apnea events in snore-related sounds
+\end_layout
+
+\begin_layout Author
+Greg Maslov 
+\family typewriter
+<maslov@cs.unc.edu>
+\end_layout
+
+\begin_layout Abstract
+TODO: abstract goes here.
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Section
+Data
+\end_layout
+
+\begin_layout Standard
+The training data consists of a set of audio recordings of snoring and sleep
+ sounds, annotated with the approximate time of each apnea or hypopnea event.
+ The duration of an event is not provided.
+ The audio is formatted as a stream of 16-bit signed integer samples at
+ a rate of 12000Hz.
+\end_layout
+
+\begin_layout Standard
+I performed some preprocessing to extract (hopefully) more useful features
+ from the raw audio data.
+ The first step is to compute a Short-Time Fourier Transform (STFT) of the
+ audio signal.
+ This turns the one-dimensional time-domain data into a two-dimensional
+ time- and frequency-domain image.
+ The first Fourier coefficient (the DC offset) is discarded from each row,
+ as well as all of the high-frequency coefficients above the frequency range
+ of snoring and breathing sounds.
+ This truncated image is then subdivided into sequential, overlapping windows
+ of around 15 seconds each.
+ See 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Implementation"
+
+\end_inset
+
+ for the exact parameters; I tried to choose them so that the resulting
+ windows are square, reasonably small, and informative.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO: show pipeline
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+UNC Sleep Lab
+\end_layout
+
+\begin_layout Standard
+The UNC-CH Sleep Lab performs routine sleep studies and collects polysomnograms
+ (PSGs) with audio and video channels.
+ The PSGs are manually annotated for apnea-hypopnea events based on these
+ criteria: 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+TODO: Insert definition of apnea/hypopnea event from sheet
+\end_layout
+
+\end_inset
+
+.
+ Dr.
+ Heidi Roth kindly made available one month's worth of data, comprising
+ 29 full-night recordings with a total of 218 hours of audio, of which 103
+ are annotated.
+ I did not make use of the unannotated recordings.
+\end_layout
+
+\begin_layout Standard
+The annotations consist of several different types of events: obstructive
+ apnea (OA), obstructive apnea with arousal (OAa), obstructive hypopnea
+ (OH), obstructive hypopnea with arousal (OHa), central apnea (CA), central
+ apnea with arousal (CAa), central hypopnea (CH), central hypopnea with
+ arousal (CHa), respiratory effort related arousal (RERA), and body position
+ changes (Supine, Upright, Left, Right).
+\end_layout
+
+\begin_layout Standard
+For the purposes of this experiment, the body position changes were ignored,
+ leaving the distribution shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:class-counts"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="2" columns="10">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(no event)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RERA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OAa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CAa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OHa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CHa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OH
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CH
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+65192
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2277
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4150
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+421
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2142
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+45
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+76
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+27
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+396
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:class-counts"
+
+\end_inset
+
+Number of training examples in each class (i.e., number of STFT windows containing
+ each event type).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Synthetic
+\end_layout
+
+\begin_layout Standard
+I used basic audio processing software to construct a simple synthetic data
+ set for testing.
+ The construction was as follows:
+\end_layout
+
+\begin_layout Itemize
+Brownian noise, amplitude 0.1.
+ This type of noise was chosen because it sounded similar to the background
+ noise in the real data.
+\end_layout
+
+\begin_layout Itemize
+DTMF tones, amplitude 0.01, duty cycle 30%, pattern 
+\begin_inset Quotes eld
+\end_inset
+
+12121212121...
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This is intended to be sort of like soft breathing sounds: a slow repeating
+ pattern, alternating between two frequencies, with pauses.
+ The chosen amplitude is between 0-10dB above the noise floor in the DTMF
+ frequency range.
+ DTMF tones were used because they were easy to generate in this particular
+ software package.
+\end_layout
+
+\begin_layout Itemize
+To simulate apnea events, I chose some arbitrary sections of the 
+\begin_inset Quotes eld
+\end_inset
+
+breathing
+\begin_inset Quotes erd
+\end_inset
+
+ pattern to delete.
+\end_layout
+
+\begin_layout Standard
+This data should be relatively easy to model, since the 
+\begin_inset Quotes eld
+\end_inset
+
+breathing
+\begin_inset Quotes erd
+\end_inset
+
+ tones are above the noise floor, and an apnea event can be detected simply
+ by finding gaps in the pattern.
+ Unlike the real data, there is no variation in the breathing pattern's
+ rate, pitch, timbre, or whatever unknown quality might denote an imminent
+ apnea event.
+ There is also no structured environmental noise and no tossing-and-turning
+ sound.
+\end_layout
+
+\begin_layout Section
+Model
+\end_layout
+
+\begin_layout Standard
+I used a Convolutional Neural Network (CNN) model based on a simplified
+ version of LeNet5
+\end_layout
+
+\begin_layout Section
+Implementation
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Implementation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The implementation was done in Python, making use of the Theano
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bergstra+al:2010-scipy"
+
+\end_inset
+
+
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Available at 
+\begin_inset CommandInset href
+LatexCommand href
+target "http://deeplearning.net/software/theano/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ library and example code from deeplearning.net.
+\end_layout
+
+\begin_layout Standard
+Data preprocessing parameters:
+\end_layout
+
+\begin_layout Itemize
+STFT width: 100 milliseconds (1200 samples).
+\end_layout
+
+\begin_layout Itemize
+STFT stride: 50 milliseconds (600 samples).
+\end_layout
+
+\begin_layout Itemize
+Number of high-frequency STFT coefficients to discard: 300 (that is, half).
+\end_layout
+
+\begin_layout Itemize
+Image downsampling factor: 1 (no downsampling).
+\end_layout
+
+\begin_layout Itemize
+Image window width: 15 seconds.
+\end_layout
+
+\begin_layout Itemize
+Image window stride: 5 seconds.
+\end_layout
+
+\begin_layout Standard
+These shape parameters result in windows of size 300x300, each overlapping
+ by two-thirds with the next.
+ The total number of examples (windows) across all audio files is 74726,
+ of which 9035 are positive (contain an event) and 65691 are negative.
+\end_layout
+
+\begin_layout Standard
+Network topology parameters:
+\end_layout
+
+\begin_layout Itemize
+CNN filter sizes: [5,5]
+\end_layout
+
+\begin_layout Itemize
+CNN maxpool sizes: [2,2]
+\end_layout
+
+\begin_layout Itemize
+Number of kernels per layer: [20,50]
+\end_layout
+
+\begin_layout Itemize
+Sigmoid layer size: 500
+\end_layout
+
+\begin_layout Standard
+Training regimen parameters:
+\end_layout
+
+\begin_layout Itemize
+Learning rate: 0.1, divided by the number of minibatches per epoch.
+\end_layout
+
+\begin_layout Itemize
+Number of positive examples in the training set: 2000.
+\end_layout
+
+\begin_layout Itemize
+Number of negative examples in the training set: 2000.
+\end_layout
+
+\begin_layout Itemize
+Minibatches per epoch: 200.
+\end_layout
+
+\begin_layout Itemize
+Maximum training epochs: 20.
+\end_layout
+
+\begin_layout Section
+Results
+\end_layout
+
+\begin_layout Itemize
+synthetic data set 10% error (TODO: get spec/rec)
+\end_layout
+
+\begin_layout Itemize
+highly dependent on learning rate and batch size
+\end_layout
+
+\begin_layout Itemize
+batch size couldn't be made large due to memory constraints
+\end_layout
+
+\begin_layout Itemize
+wish i could do a search over this parameter space
+\end_layout
+
+\begin_layout Section*
+References
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "/home/gmaslov/Mendeley/library,/home/gmaslov/Mendeley/misc"
+options "unsrt"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
