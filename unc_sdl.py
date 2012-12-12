@@ -10,24 +10,25 @@ from numpy.lib.format import open_memmap
 
 # Signals of interest (and their class IDs)
 classes = { 'RERA': 1
-          , 'OAa':  2
-          , 'CAa':  3
-          , 'OHa':  4
-          , 'CHa':  5
-          , 'OA': 6
-          , 'CA': 7
-          , 'OH': 8
+          #, 'OAa':  2
+          #, 'CAa':  3
+          #, 'OHa':  4
+          #, 'CHa':  5
+          #, 'OA': 6
+          #, 'CA': 7
+          #, 'OH': 8
           # no examples of CH anyway
           #, 'CH': 9
           }
 sample_rate = 12000
-stft_width = 100/1000.0
+stft_width = 150/1000.0
 stft_stride = 50/1000.0
 stft_take_coefficients = 300
 downsample_factor = 1
 # in seconds
-stft_window_width = 15.0
-stft_window_stride = stft_window_width/3.0
+stft_window_width = 14.0
+window_padding = 10 # pixels
+stft_window_stride = 1.0
 # Events occurring closer than this many seconds to the window's borders are ignored.
 stft_window_tolerance = 0.0 # disabled for now, since it seems to screw up training on the synth set
 
@@ -53,13 +54,13 @@ def load_datasets(path, sizes=(800,800,800,2000), topological=False):
 
     # Try to choose an equal number of examples from each class.
     def choose(size):
-        c = numpy.concatenate([numpy.random.choice((y==i).nonzero()[0], min(size/len(classes), sum(y==i))) for i in [0]+classes.values()])
+        c = numpy.concatenate([numpy.random.choice((y==i).nonzero()[0], min(size/(len(classes)+1), sum(y==i))) if len((y==i).nonzero()[0]) > 0 else numpy.zeros(0,dtype='int') for i in [0]+classes.values()])
         # fill up the quota with negative examples
         if len(c) < size:
             c = numpy.concatenate([c, numpy.random.choice((y==0).nonzero()[0], size-len(c))])
         return c
 
-    print '%d total, %d positive, %d negative' % (y.shape[0],(y==0).nonzero()[0].shape[0],(y!=0).nonzero()[0].shape[0])
+    print '%d total, %d positive, %d negative' % (y.shape[0],(y!=0).nonzero()[0].shape[0],(y==0).nonzero()[0].shape[0])
     print 'counts by class: ', numpy.bincount(y,minlength=len(classes))
 
     print 'selecting training examples'
@@ -104,12 +105,12 @@ def compute_windows(samples, times):
     window_width_rows = int(stft_window_width/stft_stride)
     window_stride_rows = int(stft_window_stride/stft_stride)
     window_start_indices = xrange(0, xs.shape[0]-window_width_rows, window_stride_rows)
-    windows = numpy.zeros((len(window_start_indices), window_width_rows/downsample_factor, xs.shape[1]/downsample_factor), dtype='float32')
+    windows = numpy.zeros((len(window_start_indices), 2*window_padding+window_width_rows/downsample_factor, xs.shape[1]/downsample_factor), dtype='float32')
     labels = numpy.zeros(len(window_start_indices), dtype='int')
     print >> sys.stderr, "Shape: ", windows.shape
     j = 0
     for i in window_start_indices:
-        windows[j] = (downsample(xs[i:i+window_width_rows],downsample_factor) - xs_min)/(xs_max - xs_min)
+        windows[j] = numpy.pad((downsample(xs[i:i+window_width_rows],downsample_factor) - xs_min)/(xs_max - xs_min), ((window_padding,window_padding),(0,0)), mode='constant', constant_values=0)
         # label is True if any event occurs during this window and not within a certain distance of the edges
         window_start_time = stft_stride*i + stft_window_tolerance
         window_end_time = stft_stride*(i+window_width_rows) - stft_window_tolerance

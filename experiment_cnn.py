@@ -1,4 +1,5 @@
 import theano
+from theano import shared, function
 import theano.tensor as T
 import numpy
 import pickle as pickle
@@ -12,8 +13,11 @@ from unc_sdl import load_datasets
 
 def train(datasets, batch_size = 200, save_path=None):
     ####
-    learning_rate=0.1
-    learning_rate_decay=0.95
+    initial_rprop_rate=0.005
+    minimum_rprop_rate=1e-6
+    maximum_rprop_rate=50
+    rprop_eta_n = 0.5
+    rprop_eta_p = 1.2
     max_epochs=100
 
     ishape = (300, 300)
@@ -23,7 +27,7 @@ def train(datasets, batch_size = 200, save_path=None):
     filtersize = [15,6,5]
     poolsize = [2,2,2]
     tanh_output_size = 500
-    n_classes = 9
+    n_classes = 2
     ####
     outsize = []
     outsize.append((ishape[0]-filtersize[0]+1)/poolsize[0])
@@ -47,7 +51,6 @@ def train(datasets, batch_size = 200, save_path=None):
     n_test_batches /= batch_size
 
     # allocate symbolic variables for the data
-    lr = T.scalar() # learning rate
     index = T.lscalar()  # index to a [mini]batch
     x = T.matrix('x')   # the data is presented as rasterized images
     y = T.ivector('y')  # the labels are presented as 1D vector of
@@ -101,14 +104,23 @@ def train(datasets, batch_size = 200, save_path=None):
     # create a list of all model parameters to be fit by gradient descent
     params = sum([layer.params for layer in layers], [])
 
-    # create a list of gradients for all model parameters
-    grads = T.grad(cost, params)
+    # train_model is a function that updates the model parameters
+    # Rprop algorithm
+    def rprop_updates():
+        rprop_values = [shared(initial_rprop_rate*numpy.ones(p.get_value(borrow=True).shape,dtype=theano.config.floatX)) for p in params]
+        rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape,dtype=theano.config.floatX)) for p in params]
+        updates = []
+        for param, value, sign in zip(params, rprop_values, rprop_signs):
+            grad = T.grad(cost, param)
+            sign_new = T.sgn(grad)
+            sign_changed = T.neq(sign, sign_new)
+            updates.append((param, T.switch(sign_changed, param, param - value*sign_new)))
+            updates.append((value, T.clip(T.switch(sign_changed, rprop_eta_n*value, rprop_eta_p*value), minimum_rprop_rate, maximum_rprop_rate)))
+            updates.append((sign, sign_new))
+        return updates
 
-    # train_model is a function that updates the model parameters by SGD
-    updates = []
-    for param_i, grad_i in zip(params, grads):
-        updates.append((param_i, param_i - lr*grad_i))
-    train_model = theano.function([index,lr], cost, updates=updates,
+    updates = rprop_updates()    
+    train_model = theano.function([index], cost, updates=updates,
             givens={ x: train_set_x[index * batch_size: (index + 1) * batch_size],
                      y: train_set_y[index * batch_size: (index + 1) * batch_size]})
 
@@ -141,7 +153,6 @@ def train(datasets, batch_size = 200, save_path=None):
 
     while (epoch < max_epochs) and (not done_looping):
         epoch = epoch + 1
-        learning_rate = learning_rate_decay * learning_rate
         for minibatch_index in xrange(n_train_batches):
             print 'epoch %i, minibatch %i/%i ...' % (epoch, minibatch_index+1, n_train_batches)
 
@@ -149,14 +160,15 @@ def train(datasets, batch_size = 200, save_path=None):
 
             if iter % 100 == 0:
                 print 'training @ iter = ', iter
-            cost_ij = train_model(minibatch_index, learning_rate)
+            cost_ij = train_model(minibatch_index)
+            print cost_ij
 
             if (iter + 1) % validation_frequency == 0:
 
                 # compute zero-one loss on validation set
                 validation_losses = [validate_model(i) for i
                                      in xrange(n_valid_batches)]
-                print validation_losses
+                print 'LL ∝',validation_losses
                 this_validation_loss = numpy.mean(validation_losses)
                 print('epoch %i, minibatch %i/%i, validation error %f %%' % \
                       (epoch, minibatch_index + 1, n_train_batches, \
@@ -182,7 +194,7 @@ def train(datasets, batch_size = 200, save_path=None):
                           (epoch, minibatch_index + 1, n_train_batches,
                            test_score * 100.))
 
-                    # compute a confusion matrix on the test data
+                    # compute a confusion matrix
                     # (row,column) <-> (true,predicted)
                     test_pred_y = numpy.concatenate([evaluate_model(i) for i in xrange(n_test_batches)])
                     confusion = numpy.bincount(n_classes*test_set_y.get_value() + test_pred_y, minlength=n_classes*n_classes).reshape((n_classes,n_classes))
@@ -206,14 +218,14 @@ def train(datasets, batch_size = 200, save_path=None):
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
 if __name__ == '__main__':
-    #path = '/srv/data/apnea/synthetic'
+    path = '/srv/data/apnea/synthetic'
     #import unc_sdl
     #unc_sdl.build_synthetic_dataset(path)
-    #datasets = load_datasets(path, sizes=(200,100,100,0))
+    datasets = load_datasets(path, sizes=(500,100,100,0))
 
-    path = '/srv/data/apnea'
-    datasets = load_datasets(path, sizes=(8000,800,800,0))
+    #path = '/srv/data/apnea'
+    #datasets = load_datasets(path, sizes=(8000,800,800,0))
 
-    train(datasets, batch_size=400, save_path=path+'/model-cnn.pkl')
+    train(datasets, batch_size=100, save_path=path+'/model-cnn.pkl')
 
 
