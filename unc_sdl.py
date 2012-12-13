@@ -214,6 +214,8 @@ def build_dataset(path='/srv/data/apnea'):
         wav_name = basename+'.wav'
         X_name = basename+'-X.npy'
         y_name = basename+'-y.npy'
+        X_names.append(X_name)
+        y_names.append(y_name)
 
         print >> sys.stderr, "Reading samples from %s" % wav_name
         rate, samples = wavfile.read(wav_name)
@@ -244,8 +246,6 @@ def build_dataset(path='/srv/data/apnea'):
         numpy.save(X_name, X)
         numpy.save(y_name, y)
         total_examples += X.shape[0]
-        X_names.append(X_name)
-        y_names.append(y_name)
         del X, y
         # end for night
 
@@ -255,12 +255,15 @@ def build_dataset(path='/srv/data/apnea'):
 
     i = 0
     for X_name,y_name in zip(X_names,y_names):
+        print >> sys.stderr, X_name
         x1 = numpy.load(X_name, mmap_mode='r')
         ys.append(numpy.load(y_name))
         X[i:i+x1.shape[0]] = x1
         i += x1.shape[0]
+    print >> sys.stderr, 'OK'
     y = numpy.concatenate(ys)
     numpy.save(path+'/y.npy', y)
+    assert i == total_examples
     return (X,y)
 
 def stft(x, fs, framesz, hop):

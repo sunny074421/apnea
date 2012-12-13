@@ -11,13 +11,28 @@ from deeplearning.mlp import HiddenLayer
 from deeplearning.logistic_sgd import LogisticRegression
 from unc_sdl import load_datasets
 
-def train(datasets, batch_size = 200, save_path=None):
-    ####
+# Rprop algorithm. Hooray for Rprop!
+def rprop_updates(cost, params):
     initial_rprop_rate=0.005
     minimum_rprop_rate=1e-6
     maximum_rprop_rate=50
     rprop_eta_n = 0.5
     rprop_eta_p = 1.2
+
+    rprop_values = [shared(initial_rprop_rate*numpy.ones(p.get_value(borrow=True).shape,dtype=theano.config.floatX)) for p in params]
+    rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape,dtype=theano.config.floatX)) for p in params]
+    updates = []
+    for param, value, sign in zip(params, rprop_values, rprop_signs):
+        grad = T.grad(cost, param)
+        sign_new = T.sgn(grad)
+        sign_changed = T.neq(sign, sign_new)
+        updates.append((param, T.switch(sign_changed, param, param - value*sign_new)))
+        updates.append((value, T.clip(T.switch(sign_changed, rprop_eta_n*value, rprop_eta_p*value), minimum_rprop_rate, maximum_rprop_rate)))
+        updates.append((sign, sign_new))
+    return updates
+
+def train(datasets, batch_size = 200, save_path=None):
+    ####
     max_epochs=100
 
     ishape = (300, 300)
@@ -27,7 +42,7 @@ def train(datasets, batch_size = 200, save_path=None):
     filtersize = [15,6,5]
     poolsize = [2,2,2]
     tanh_output_size = 500
-    n_classes = 2
+    n_classes = 9
     ####
     outsize = []
     outsize.append((ishape[0]-filtersize[0]+1)/poolsize[0])
@@ -105,21 +120,7 @@ def train(datasets, batch_size = 200, save_path=None):
     params = sum([layer.params for layer in layers], [])
 
     # train_model is a function that updates the model parameters
-    # Rprop algorithm
-    def rprop_updates():
-        rprop_values = [shared(initial_rprop_rate*numpy.ones(p.get_value(borrow=True).shape,dtype=theano.config.floatX)) for p in params]
-        rprop_signs = [shared(numpy.zeros(p.get_value(borrow=True).shape,dtype=theano.config.floatX)) for p in params]
-        updates = []
-        for param, value, sign in zip(params, rprop_values, rprop_signs):
-            grad = T.grad(cost, param)
-            sign_new = T.sgn(grad)
-            sign_changed = T.neq(sign, sign_new)
-            updates.append((param, T.switch(sign_changed, param, param - value*sign_new)))
-            updates.append((value, T.clip(T.switch(sign_changed, rprop_eta_n*value, rprop_eta_p*value), minimum_rprop_rate, maximum_rprop_rate)))
-            updates.append((sign, sign_new))
-        return updates
-
-    updates = rprop_updates()    
+    updates = rprop_updates(cost, params)    
     train_model = theano.function([index], cost, updates=updates,
             givens={ x: train_set_x[index * batch_size: (index + 1) * batch_size],
                      y: train_set_y[index * batch_size: (index + 1) * batch_size]})
@@ -153,6 +154,13 @@ def train(datasets, batch_size = 200, save_path=None):
 
     while (epoch < max_epochs) and (not done_looping):
         epoch = epoch + 1
+
+        # Shuffle training set.
+        rng_state = numpy.random.get_state()
+        numpy.random.shuffle(train_set_x.get_value(borrow=True))
+        numpy.random.set_state(rng_state)
+        numpy.random.shuffle(train_set_y.get_value(borrow=True))
+
         for minibatch_index in xrange(n_train_batches):
             print 'epoch %i, minibatch %i/%i ...' % (epoch, minibatch_index+1, n_train_batches)
 
@@ -161,14 +169,13 @@ def train(datasets, batch_size = 200, save_path=None):
             if iter % 100 == 0:
                 print 'training @ iter = ', iter
             cost_ij = train_model(minibatch_index)
-            print cost_ij
+            print 'LL ~', cost_ij
 
             if (iter + 1) % validation_frequency == 0:
 
                 # compute zero-one loss on validation set
                 validation_losses = [validate_model(i) for i
                                      in xrange(n_valid_batches)]
-                print 'LL ∝',validation_losses
                 this_validation_loss = numpy.mean(validation_losses)
                 print('epoch %i, minibatch %i/%i, validation error %f %%' % \
                       (epoch, minibatch_index + 1, n_train_batches, \
@@ -218,14 +225,14 @@ def train(datasets, batch_size = 200, save_path=None):
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
 if __name__ == '__main__':
-    path = '/srv/data/apnea/synthetic'
+    #path = '/srv/data/apnea/synthetic'
     #import unc_sdl
     #unc_sdl.build_synthetic_dataset(path)
-    datasets = load_datasets(path, sizes=(500,100,100,0))
+    #datasets = load_datasets(path, sizes=(500,100,100,0))
 
-    #path = '/srv/data/apnea'
-    #datasets = load_datasets(path, sizes=(8000,800,800,0))
+    path = '/srv/data/apnea'
+    datasets = load_datasets(path, sizes=(6000,1000,1000,0))
 
-    train(datasets, batch_size=100, save_path=path+'/model-cnn.pkl')
+    train(datasets, batch_size=500, save_path=path+'/model-cnn.pkl')
 
 
