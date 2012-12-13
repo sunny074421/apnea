@@ -10,13 +10,13 @@ from numpy.lib.format import open_memmap
 
 # Signals of interest (and their class IDs)
 classes = { 'RERA': 1
-          #, 'OAa':  2
-          #, 'CAa':  3
-          #, 'OHa':  4
-          #, 'CHa':  5
-          #, 'OA': 6
-          #, 'CA': 7
-          #, 'OH': 8
+          , 'OAa':  2
+          , 'CAa':  3
+          , 'OHa':  4
+          , 'CHa':  5
+          , 'OA': 6
+          , 'CA': 7
+          , 'OH': 8
           # no examples of CH anyway
           #, 'CH': 9
           }
@@ -28,7 +28,7 @@ downsample_factor = 1
 # in seconds
 stft_window_width = 14.0
 window_padding = 10 # pixels
-stft_window_stride = 1.0
+stft_window_stride = 2.5
 # Events occurring closer than this many seconds to the window's borders are ignored.
 stft_window_tolerance = 0.0 # disabled for now, since it seems to screw up training on the synth set
 
@@ -63,24 +63,24 @@ def load_datasets(path, sizes=(800,800,800,2000), topological=False):
     print '%d total, %d positive, %d negative' % (y.shape[0],(y!=0).nonzero()[0].shape[0],(y==0).nonzero()[0].shape[0])
     print 'counts by class: ', numpy.bincount(y,minlength=len(classes))
 
-    print 'selecting training examples'
     selection = choose(sizes[0])
+    print 'selected %d training examples'%len(selection)
     numpy.random.shuffle(selection)
     datasets[0] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
 
-    print 'selecting validation examples'
     selection = choose(sizes[1])
+    print 'selected %d validation examples'%len(selection)
     numpy.random.shuffle(selection)
     datasets[1] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
 
-    print 'selecting test examples'
     selection = choose(sizes[2])
+    print 'selected %d test examples'%len(selection)
     numpy.random.shuffle(selection)
     datasets[2] = (shared(X[selection],borrow=True), shared(y[selection],borrow=True))
 
-    print 'selecting unsupervised pretraining examples'
     # Randomly select examples
     selection = numpy.random.choice(y.shape[0], sizes[3])
+    print 'selected %d pretraining examples'%len(selection)
     numpy.random.shuffle(selection)
     datasets[3] = shared(X[selection],borrow=True)
 
@@ -258,6 +258,7 @@ def build_dataset(path='/srv/data/apnea'):
         x1 = numpy.load(X_name, mmap_mode='r')
         ys.append(numpy.load(y_name))
         X[i:i+x1.shape[0]] = x1
+        i += x1.shape[0]
     y = numpy.concatenate(ys)
     numpy.save(path+'/y.npy', y)
     return (X,y)
@@ -284,8 +285,7 @@ def downsample(X, sampling_factor):
     return scipy.signal.convolve2d(X,kernel,mode='same')[::sampling_factor,::sampling_factor]
 
 if __name__ == "__main__":
-    # Rebuild both datasets
-    build_synthetic_dataset()
+    #build_synthetic_dataset()
     build_dataset()
 
 
