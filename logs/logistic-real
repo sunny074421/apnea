@@ -1,0 +1,453 @@
+149448 total, 17723 positive, 131725 negative
+counts by class:  [131725   4263   7707    774   3954     78    142     51    754]
+selected 6000 training examples
+selected 1000 validation examples
+selected 1000 test examples
+selected 0 pretraining examples
+building the model
+training the model
+epoch 1, minibatch 12/12, validation error 79.500000 %
+     epoch 1, minibatch 12/12, test error of best model 79.500000 %
+     confusion matrix of best model on test data:
+[[205   0   0   0   0   0   0   0   0]
+ [111   0   0   0   0   0   0   0   0]
+ [111   0   0   0   0   0   0   0   0]
+ [111   0   0   0   0   0   0   0   0]
+ [111   0   0   0   0   0   0   0   0]
+ [ 78   0   0   0   0   0   0   0   0]
+ [111   0   0   0   0   0   0   0   0]
+ [ 51   0   0   0   0   0   0   0   0]
+ [111   0   0   0   0   0   0   0   0]]
+epoch 2, minibatch 12/12, validation error 79.500000 %
+epoch 3, minibatch 12/12, validation error 79.000000 %
+     epoch 3, minibatch 12/12, test error of best model 78.500000 %
+     confusion matrix of best model on test data:
+[[204   0   0   0   0   1   0   0   0]
+ [111   0   0   0   0   0   0   0   0]
+ [108   0   1   0   1   0   0   0   1]
+ [111   0   0   0   0   0   0   0   0]
+ [101   0   0   0  10   0   0   0   0]
+ [ 78   0   0   0   0   0   0   0   0]
+ [108   0   1   0   2   0   0   0   0]
+ [ 51   0   0   0   0   0   0   0   0]
+ [107   0   1   0   3   0   0   0   0]]
+epoch 4, minibatch 12/12, validation error 77.400000 %
+     epoch 4, minibatch 12/12, test error of best model 76.700000 %
+     confusion matrix of best model on test data:
+[[199   0   0   3   1   1   0   0   1]
+ [110   0   0   0   1   0   0   0   0]
+ [100   0   1   7   2   0   0   0   1]
+ [ 91   0   0  20   0   0   0   0   0]
+ [ 91   0   5   1  11   0   0   0   3]
+ [ 78   0   0   0   0   0   0   0   0]
+ [ 97   0   4   0  10   0   0   0   0]
+ [ 51   0   0   0   0   0   0   0   0]
+ [ 95   0   4   3   7   0   0   0   2]]
+epoch 5, minibatch 12/12, validation error 76.700000 %
+     epoch 5, minibatch 12/12, test error of best model 75.900000 %
+     confusion matrix of best model on test data:
+[[195   0   0   4   3   1   0   0   2]
+ [109   0   0   0   2   0   0   0   0]
+ [ 96   0   3   8   2   0   0   0   2]
+ [ 88   0   1  22   0   0   0   0   0]
+ [ 89   0   6   1  11   0   0   0   4]
+ [ 71   0   0   0   1   6   0   0   0]
+ [ 94   0   2   0  14   0   0   0   1]
+ [ 51   0   0   0   0   0   0   0   0]
+ [ 91   0   4   4   8   0   0   0   4]]
+epoch 6, minibatch 12/12, validation error 76.500000 %
+     epoch 6, minibatch 12/12, test error of best model 75.500000 %
+     confusion matrix of best model on test data:
+[[196   0   0   3   4   1   0   0   1]
+ [108   0   0   0   2   0   0   0   1]
+ [ 94   0   4   9   1   0   0   0   3]
+ [ 85   0   1  25   0   0   0   0   0]
+ [ 89   0   6   1  11   0   0   0   4]
+ [ 71   0   0   0   1   6   0   0   0]
+ [ 94   0   2   0  14   0   0   0   1]
+ [ 51   0   0   0   0   0   0   0   0]
+ [ 92   0   4   4   8   0   0   0   3]]
+epoch 7, minibatch 12/12, validation error 75.500000 %
+     epoch 7, minibatch 12/12, test error of best model 73.800000 %
+     confusion matrix of best model on test data:
+[[193   0   0   4   5   1   0   1   1]
+ [106   2   0   0   2   0   0   0   1]
+ [ 89   0   7  11   1   0   0   0   3]
+ [ 78   0   1  32   0   0   0   0   0]
+ [ 87   0   7   2  11   0   0   0   4]
+ [ 65   0   0   0   4   7   0   0   2]
+ [ 94   0   5   0  11   0   0   0   1]
+ [ 50   0   0   0   0   0   0   1   0]
+ [ 88   2   2   4   6   0   0   0   9]]
+epoch 8, minibatch 12/12, validation error 75.700000 %
+epoch 9, minibatch 12/12, validation error 75.500000 %
+epoch 10, minibatch 12/12, validation error 75.200000 %
+     epoch 10, minibatch 12/12, test error of best model 72.800000 %
+     confusion matrix of best model on test data:
+[[191   0   2   5   4   1   0   1   1]
+ [103   3   1   0   2   0   0   0   2]
+ [ 89   1   7  10   1   0   0   0   3]
+ [ 73   0   2  36   0   0   0   0   0]
+ [ 87   0   6   1  11   0   0   0   6]
+ [ 61   0   0   0   3  12   0   0   2]
+ [ 94   0   5   0  10   0   1   0   1]
+ [ 50   0   0   0   0   0   0   1   0]
+ [ 88   2   2   3   6   0   0   0  10]]
+epoch 11, minibatch 12/12, validation error 74.700000 %
+     epoch 11, minibatch 12/12, test error of best model 72.500000 %
+     confusion matrix of best model on test data:
+[[189   0   3   6   4   1   0   1   1]
+ [100   5   2   1   1   0   0   0   2]
+ [ 89   1   7  10   1   0   0   0   3]
+ [ 73   0   2  36   0   0   0   0   0]
+ [ 86   0   6   1  12   0   0   0   6]
+ [ 60   0   1   0   3  12   0   0   2]
+ [ 94   0   4   0  10   0   1   0   2]
+ [ 48   0   0   2   0   0   0   1   0]
+ [ 84   2   2   3   8   0   0   0  12]]
+epoch 12, minibatch 12/12, validation error 74.200000 %
+     epoch 12, minibatch 12/12, test error of best model 71.900000 %
+     confusion matrix of best model on test data:
+[[188   0   3   6   5   1   0   1   1]
+ [100   5   2   1   1   0   0   0   2]
+ [ 88   1   7  11   1   0   0   0   3]
+ [ 73   0   2  36   0   0   0   0   0]
+ [ 86   0   6   1  12   0   0   0   6]
+ [ 55   0   1   0   3  17   0   0   2]
+ [ 94   0   4   0   9   0   1   0   3]
+ [ 47   0   0   0   0   1   0   3   0]
+ [ 83   2   2   3   9   0   0   0  12]]
+epoch 13, minibatch 12/12, validation error 74.200000 %
+epoch 14, minibatch 12/12, validation error 74.300000 %
+epoch 15, minibatch 12/12, validation error 74.300000 %
+epoch 16, minibatch 12/12, validation error 74.300000 %
+epoch 17, minibatch 12/12, validation error 73.800000 %
+     epoch 17, minibatch 12/12, test error of best model 71.100000 %
+     confusion matrix of best model on test data:
+[[189   0   1   7   5   1   0   1   1]
+ [ 99   5   1   2   1   0   0   0   3]
+ [ 85   1   7  13   1   1   0   0   3]
+ [ 73   0   2  36   0   0   0   0   0]
+ [ 85   0   6   1  12   0   0   0   7]
+ [ 53   0   0   0   3  20   0   0   2]
+ [ 94   0   4   0   9   0   1   0   3]
+ [ 47   0   0   0   0   1   0   3   0]
+ [ 84   2   1   3   4   0   1   0  16]]
+epoch 18, minibatch 12/12, validation error 73.600000 %
+     epoch 18, minibatch 12/12, test error of best model 71.000000 %
+     confusion matrix of best model on test data:
+[[190   0   0   7   5   1   0   1   1]
+ [ 99   5   1   2   0   0   0   0   4]
+ [ 82   1   7  16   1   1   0   0   3]
+ [ 73   0   2  36   0   0   0   0   0]
+ [ 85   0   7   1  11   0   0   0   7]
+ [ 53   0   0   0   3  20   0   0   2]
+ [ 94   0   4   0   8   0   2   0   3]
+ [ 47   0   0   0   0   1   0   3   0]
+ [ 85   2   1   2   4   0   1   0  16]]
+epoch 19, minibatch 12/12, validation error 73.700000 %
+epoch 20, minibatch 12/12, validation error 73.300000 %
+     epoch 20, minibatch 12/12, test error of best model 70.900000 %
+     confusion matrix of best model on test data:
+[[190   0   0   7   5   1   0   1   1]
+ [ 98   6   1   2   0   0   0   0   4]
+ [ 83   1   6  16   1   1   0   0   3]
+ [ 72   0   2  37   0   0   0   0   0]
+ [ 84   1   6   1  13   0   0   0   6]
+ [ 53   0   0   0   3  20   0   0   2]
+ [ 97   0   4   0   2   0   2   0   6]
+ [ 47   0   0   0   0   1   0   3   0]
+ [ 85   2   1   2   6   0   1   0  14]]
+epoch 21, minibatch 12/12, validation error 73.100000 %
+     epoch 21, minibatch 12/12, test error of best model 70.600000 %
+     confusion matrix of best model on test data:
+[[191   0   0   7   4   1   0   1   1]
+ [ 98   6   0   2   0   0   0   0   5]
+ [ 83   1   6  16   1   1   0   0   3]
+ [ 71   0   2  38   0   0   0   0   0]
+ [ 84   1   6   1  12   0   0   0   7]
+ [ 54   0   0   0   0  22   0   0   2]
+ [ 97   0   4   0   1   0   2   0   7]
+ [ 48   0   0   0   0   0   0   3   0]
+ [ 84   2   1   3   6   0   1   0  14]]
+epoch 22, minibatch 12/12, validation error 72.700000 %
+     epoch 22, minibatch 12/12, test error of best model 70.000000 %
+     confusion matrix of best model on test data:
+[[191   0   0   7   4   1   0   1   1]
+ [ 98   6   0   2   0   0   0   0   5]
+ [ 83   1   6  16   1   1   0   0   3]
+ [ 70   0   2  39   0   0   0   0   0]
+ [ 83   1   5   1  13   0   0   0   8]
+ [ 51   0   0   0   0  25   0   0   2]
+ [ 97   0   4   0   1   0   2   0   7]
+ [ 47   0   0   0   0   1   0   3   0]
+ [ 84   2   1   2   6   0   1   0  15]]
+epoch 23, minibatch 12/12, validation error 72.500000 %
+     epoch 23, minibatch 12/12, test error of best model 69.800000 %
+     confusion matrix of best model on test data:
+[[191   0   0   7   4   1   0   1   1]
+ [ 98   7   0   1   1   0   0   0   4]
+ [ 84   0   6  16   1   1   0   0   3]
+ [ 72   0   2  37   0   0   0   0   0]
+ [ 82   1   6   2  14   0   0   0   6]
+ [ 48   0   0   0   0  25   0   0   5]
+ [ 97   0   4   0   3   0   2   0   5]
+ [ 47   0   0   0   0   0   0   4   0]
+ [ 83   2   1   2   6   0   1   0  16]]
+epoch 24, minibatch 12/12, validation error 72.400000 %
+     epoch 24, minibatch 12/12, test error of best model 69.600000 %
+     confusion matrix of best model on test data:
+[[190   0   0   8   4   1   0   1   1]
+ [ 99   6   0   1   1   0   0   0   4]
+ [ 83   0   6  16   2   1   0   0   3]
+ [ 71   0   2  38   0   0   0   0   0]
+ [ 82   1   6   2  14   0   0   0   6]
+ [ 47   0   0   1   0  25   0   0   5]
+ [ 91   0   4   0   6   0   5   0   5]
+ [ 46   0   0   0   0   1   0   4   0]
+ [ 82   2   1   3   6   0   1   0  16]]
+epoch 25, minibatch 12/12, validation error 72.500000 %
+epoch 26, minibatch 12/12, validation error 72.800000 %
+epoch 27, minibatch 12/12, validation error 72.400000 %
+epoch 28, minibatch 12/12, validation error 72.600000 %
+epoch 29, minibatch 12/12, validation error 72.500000 %
+epoch 30, minibatch 12/12, validation error 72.400000 %
+epoch 31, minibatch 12/12, validation error 72.900000 %
+epoch 32, minibatch 12/12, validation error 72.200000 %
+     epoch 32, minibatch 12/12, test error of best model 68.500000 %
+     confusion matrix of best model on test data:
+[[189   0   0   9   4   1   0   1   1]
+ [ 94   6   1   3   2   0   0   1   4]
+ [ 81   0   7  17   2   1   0   0   3]
+ [ 68   0   2  41   0   0   0   0   0]
+ [ 82   2   4   2  13   1   0   0   7]
+ [ 42   0   0   1   1  29   0   0   5]
+ [ 86   2   5   0   5   0  10   0   3]
+ [ 44   3   0   0   0   0   0   4   0]
+ [ 77   4   1   3   8   0   1   1  16]]
+epoch 33, minibatch 12/12, validation error 72.300000 %
+epoch 34, minibatch 12/12, validation error 72.300000 %
+epoch 35, minibatch 12/12, validation error 72.300000 %
+epoch 36, minibatch 12/12, validation error 71.500000 %
+     epoch 36, minibatch 12/12, test error of best model 68.300000 %
+     confusion matrix of best model on test data:
+[[189   1   0   9   3   1   1   0   1]
+ [ 93   6   1   3   2   0   0   1   5]
+ [ 81   0   7  17   2   1   0   0   3]
+ [ 68   0   2  41   0   0   0   0   0]
+ [ 83   1   5   2  12   1   0   0   7]
+ [ 47   0   0   1   0  28   0   0   2]
+ [ 89   0   4   0   1   0  14   0   3]
+ [ 44   3   0   0   0   0   0   4   0]
+ [ 77   4   1   3   8   0   1   1  16]]
+epoch 37, minibatch 12/12, validation error 71.600000 %
+epoch 38, minibatch 12/12, validation error 71.800000 %
+epoch 39, minibatch 12/12, validation error 71.400000 %
+     epoch 39, minibatch 12/12, test error of best model 68.100000 %
+     confusion matrix of best model on test data:
+[[188   1   0  10   3   1   1   0   1]
+ [ 93   6   1   3   2   0   0   1   5]
+ [ 81   0   7  17   2   1   0   0   3]
+ [ 68   0   2  41   0   0   0   0   0]
+ [ 82   1   5   2  14   0   0   0   7]
+ [ 49   0   0   1   0  26   0   0   2]
+ [ 88   0   4   0   1   0  15   0   3]
+ [ 44   3   0   0   0   0   0   4   0]
+ [ 75   4   1   3   8   0   1   1  18]]
+epoch 40, minibatch 12/12, validation error 71.200000 %
+     epoch 40, minibatch 12/12, test error of best model 68.700000 %
+     confusion matrix of best model on test data:
+[[188   1   0  10   3   1   1   0   1]
+ [ 94   5   1   3   1   0   1   1   5]
+ [ 81   0   7  17   2   1   0   0   3]
+ [ 68   0   2  41   0   0   0   0   0]
+ [ 82   1   6   2  14   0   0   0   6]
+ [ 53   0   0   1   0  22   0   0   2]
+ [ 89   0   4   0   1   0  14   0   3]
+ [ 44   3   0   0   0   0   0   4   0]
+ [ 75   4   1   3   8   0   1   1  18]]
+epoch 41, minibatch 12/12, validation error 71.400000 %
+epoch 42, minibatch 12/12, validation error 70.500000 %
+     epoch 42, minibatch 12/12, test error of best model 68.100000 %
+     confusion matrix of best model on test data:
+[[185   2   0  10   4   1   1   1   1]
+ [ 93   6   0   3   1   0   1   1   6]
+ [ 81   0   7  17   2   1   0   0   3]
+ [ 68   0   2  41   0   0   0   0   0]
+ [ 80   2   5   2  14   0   0   0   8]
+ [ 46   0   0   1   0  29   0   0   2]
+ [ 85   3   4   0   1   0  15   0   3]
+ [ 47   0   0   0   0   0   0   4   0]
+ [ 75   4   1   3   8   0   1   1  18]]
+epoch 43, minibatch 12/12, validation error 70.300000 %
+     epoch 43, minibatch 12/12, test error of best model 67.700000 %
+     confusion matrix of best model on test data:
+[[184   2   0  10   4   1   1   2   1]
+ [ 93   6   0   3   1   0   1   1   6]
+ [ 79   0   7  17   2   1   0   0   5]
+ [ 63   0   2  45   0   0   0   1   0]
+ [ 79   3   5   2  15   0   0   0   7]
+ [ 45   0   0   1   0  29   0   0   3]
+ [ 85   3   3   0   3   0  15   0   2]
+ [ 44   3   0   0   0   0   0   4   0]
+ [ 75   4   1   3   8   0   1   1  18]]
+epoch 44, minibatch 12/12, validation error 70.200000 %
+     epoch 44, minibatch 12/12, test error of best model 68.300000 %
+     confusion matrix of best model on test data:
+[[185   2   0  10   3   1   1   2   1]
+ [ 93   6   0   3   1   0   1   1   6]
+ [ 79   0   7  17   2   1   0   0   5]
+ [ 63   0   2  46   0   0   0   0   0]
+ [ 79   3   5   2  13   0   1   0   8]
+ [ 51   0   0   1   0  23   0   0   3]
+ [ 85   3   3   0   3   0  15   0   2]
+ [ 44   3   0   0   0   0   0   4   0]
+ [ 75   4   1   3   8   0   1   1  18]]
+epoch 45, minibatch 12/12, validation error 70.700000 %
+epoch 46, minibatch 12/12, validation error 70.700000 %
+epoch 47, minibatch 12/12, validation error 70.600000 %
+epoch 48, minibatch 12/12, validation error 70.000000 %
+     epoch 48, minibatch 12/12, test error of best model 68.000000 %
+     confusion matrix of best model on test data:
+[[181   3   0   9   7   1   1   3   0]
+ [ 94   6   0   2   1   0   1   1   6]
+ [ 80   0   6  17   2   1   0   0   5]
+ [ 66   0   2  41   0   0   0   2   0]
+ [ 79   2   5   2  12   0   3   0   8]
+ [ 45   1   0   1   0  29   0   0   2]
+ [ 81   3   3   0   4   0  19   0   1]
+ [ 40   5   0   0   0   0   0   6   0]
+ [ 75   4   2   2   5   0   2   1  20]]
+epoch 49, minibatch 12/12, validation error 69.700000 %
+     epoch 49, minibatch 12/12, test error of best model 67.500000 %
+     confusion matrix of best model on test data:
+[[184   2   0   9   4   1   1   3   1]
+ [ 94   6   0   2   1   0   1   1   6]
+ [ 79   0   6  17   2   1   0   1   5]
+ [ 65   0   2  41   0   0   0   3   0]
+ [ 78   2   5   2  12   0   3   1   8]
+ [ 46   0   0   1   0  25   0   3   3]
+ [ 81   2   3   0   4   0  20   0   1]
+ [ 38   2   0   0   0   0   0  11   0]
+ [ 72   4   2   1   5   0   2   5  20]]
+epoch 50, minibatch 12/12, validation error 69.700000 %
+epoch 51, minibatch 12/12, validation error 70.400000 %
+epoch 52, minibatch 12/12, validation error 70.300000 %
+epoch 53, minibatch 12/12, validation error 70.400000 %
+epoch 54, minibatch 12/12, validation error 70.200000 %
+epoch 55, minibatch 12/12, validation error 70.200000 %
+epoch 56, minibatch 12/12, validation error 70.000000 %
+epoch 57, minibatch 12/12, validation error 69.900000 %
+epoch 58, minibatch 12/12, validation error 70.100000 %
+epoch 59, minibatch 12/12, validation error 70.000000 %
+epoch 60, minibatch 12/12, validation error 69.600000 %
+     epoch 60, minibatch 12/12, test error of best model 66.300000 %
+     confusion matrix of best model on test data:
+[[182   2   0   9   4   1   1   5   1]
+ [ 92   5   0   1   2   0   1   4   6]
+ [ 77   0   6  17   2   0   1   3   5]
+ [ 64   0   2  40   0   0   0   5   0]
+ [ 76   3   5   2  13   0   3   2   7]
+ [ 47   0   0   1   0  25   0   2   3]
+ [ 77   2   4   0   5   0  21   1   1]
+ [ 30   0   0   0   0   0   0  21   0]
+ [ 66   3   2   2   5   0   2   7  24]]
+epoch 61, minibatch 12/12, validation error 69.500000 %
+     epoch 61, minibatch 12/12, test error of best model 66.400000 %
+     confusion matrix of best model on test data:
+[[183   0   1   8   4   1   1   6   1]
+ [ 92   4   0   1   2   0   1   5   6]
+ [ 77   0   6  17   2   0   1   3   5]
+ [ 65   0   2  38   0   0   0   6   0]
+ [ 76   2   5   2  14   0   3   2   7]
+ [ 47   0   0   1   0  25   0   2   3]
+ [ 80   0   4   0   4   0  21   1   1]
+ [ 30   0   0   0   0   0   0  21   0]
+ [ 68   1   2   2   5   0   2   7  24]]
+epoch 62, minibatch 12/12, validation error 69.500000 %
+epoch 63, minibatch 12/12, validation error 69.900000 %
+epoch 64, minibatch 12/12, validation error 70.500000 %
+epoch 65, minibatch 12/12, validation error 71.000000 %
+epoch 66, minibatch 12/12, validation error 70.900000 %
+epoch 67, minibatch 12/12, validation error 70.500000 %
+epoch 68, minibatch 12/12, validation error 70.600000 %
+epoch 69, minibatch 12/12, validation error 70.200000 %
+epoch 70, minibatch 12/12, validation error 70.400000 %
+epoch 71, minibatch 12/12, validation error 70.500000 %
+epoch 72, minibatch 12/12, validation error 70.400000 %
+epoch 73, minibatch 12/12, validation error 70.200000 %
+epoch 74, minibatch 12/12, validation error 70.000000 %
+epoch 75, minibatch 12/12, validation error 70.400000 %
+epoch 76, minibatch 12/12, validation error 70.200000 %
+epoch 77, minibatch 12/12, validation error 69.500000 %
+epoch 78, minibatch 12/12, validation error 69.400000 %
+     epoch 78, minibatch 12/12, test error of best model 68.200000 %
+     confusion matrix of best model on test data:
+[[178   7   2   9   4   0   1   3   1]
+ [ 89   6   1   3   3   2   1   1   5]
+ [ 78   0   7  17   3   0   1   0   5]
+ [ 66   0   3  41   0   0   0   1   0]
+ [ 78   4   8   2  11   0   0   0   8]
+ [ 46   1   0   1   0  28   0   0   2]
+ [ 75   3   4   0   7   0  20   0   2]
+ [ 45   2   0   0   0   0   0   4   0]
+ [ 72   5   2   4   4   0   0   1  23]]
+epoch 79, minibatch 12/12, validation error 69.500000 %
+epoch 80, minibatch 12/12, validation error 69.500000 %
+epoch 81, minibatch 12/12, validation error 69.700000 %
+epoch 82, minibatch 12/12, validation error 69.300000 %
+     epoch 82, minibatch 12/12, test error of best model 67.700000 %
+     confusion matrix of best model on test data:
+[[179   7   2   8   4   0   1   3   1]
+ [ 88   6   1   3   4   2   1   1   5]
+ [ 77   0   7  18   3   0   1   0   5]
+ [ 63   0   3  44   0   0   0   1   0]
+ [ 77   5   8   2  11   0   0   0   8]
+ [ 46   1   0   1   0  28   0   0   2]
+ [ 75   3   4   0   7   0  20   0   2]
+ [ 45   2   0   0   0   0   0   4   0]
+ [ 70   5   1   4   6   0   0   1  24]]
+epoch 83, minibatch 12/12, validation error 69.000000 %
+     epoch 83, minibatch 12/12, test error of best model 68.000000 %
+     confusion matrix of best model on test data:
+[[179   7   2   7   4   0   2   3   1]
+ [ 91   6   1   2   3   1   1   1   5]
+ [ 75   0  10  17   3   0   1   0   5]
+ [ 66   0   3  41   0   0   0   1   0]
+ [ 78   5   7   2   9   0   2   0   8]
+ [ 47   1   0   1   0  27   0   0   2]
+ [ 73   4   4   0   7   0  21   0   2]
+ [ 45   2   0   0   0   0   0   4   0]
+ [ 71   4   2   3   5   0   2   1  23]]
+epoch 84, minibatch 12/12, validation error 69.300000 %
+epoch 85, minibatch 12/12, validation error 69.600000 %
+epoch 86, minibatch 12/12, validation error 69.200000 %
+epoch 87, minibatch 12/12, validation error 69.200000 %
+epoch 88, minibatch 12/12, validation error 69.200000 %
+epoch 89, minibatch 12/12, validation error 69.000000 %
+epoch 90, minibatch 12/12, validation error 68.400000 %
+     epoch 90, minibatch 12/12, test error of best model 68.100000 %
+     confusion matrix of best model on test data:
+[[179   8   2   7   4   0   1   3   1]
+ [ 91   5   1   3   3   1   1   1   5]
+ [ 76   0   8  17   4   0   1   0   5]
+ [ 66   0   3  41   0   0   0   1   0]
+ [ 79   4   6   2  11   0   1   0   8]
+ [ 47   1   0   1   0  27   0   0   2]
+ [ 73   4   4   0   7   0  21   0   2]
+ [ 45   2   0   0   0   0   0   4   0]
+ [ 72   4   2   3   5   0   1   1  23]]
+epoch 91, minibatch 12/12, validation error 69.000000 %
+epoch 92, minibatch 12/12, validation error 68.900000 %
+epoch 93, minibatch 12/12, validation error 69.000000 %
+epoch 94, minibatch 12/12, validation error 69.000000 %
+epoch 95, minibatch 12/12, validation error 69.300000 %
+epoch 96, minibatch 12/12, validation error 69.200000 %
+epoch 97, minibatch 12/12, validation error 69.300000 %
+epoch 98, minibatch 12/12, validation error 69.000000 %
+epoch 99, minibatch 12/12, validation error 68.500000 %
+epoch 100, minibatch 12/12, validation error 68.500000 %
+Optimization complete with best validation score of 68.400000 %,with test performance 68.100000 %
+The code run for 100 epochs, with 0.135899 epochs/sec
+The code for file experiment_logistic.py ran for 735.8s
+saving model

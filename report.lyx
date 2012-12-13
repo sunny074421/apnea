@@ -2,7 +2,7 @@
 \lyxformat 413
 \begin_document
 \begin_header
-\textclass article
+\textclass IEEEtran
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -25,6 +25,7 @@
 \bibtex_command default
 \index_command default
 \paperfontsize default
+\spacing single
 \use_hyperref false
 \papersize default
 \use_geometry false
@@ -60,7 +61,8 @@
 \begin_body
 
 \begin_layout Title
-Detecting sleep apnea events in snore-related sounds
+Detecting sleep apnea events in snore-related sounds using a convolutional
+ neural network
 \end_layout
 
 \begin_layout Author
@@ -70,14 +72,288 @@ Greg Maslov
 \end_layout
 
 \begin_layout Abstract
-TODO: abstract goes here.
+I propose a Convolutional Neural Network model to automatically detect and
+ classify sleep apneas and hypopneas using only unsophisticated, noisy audio
+ recordings of snore-related sounds using a general-purpose microphone.
+ I evaluate the model on a data set from the UNC Sleep Lab and discuss future
+ work.
 \end_layout
 
 \begin_layout Section
-Introduction
+Motivation
+\end_layout
+
+\begin_layout Standard
+Obstructive sleep apnea (OSA) is a common condition whose symptoms can include
+ daytime sleepiness, hypertension, cardiovascular morbidity, and impaired
+ cognitive function.
+ It is estimated that 5% of adults suffer from OSA, and up to 20% have mild
+ or asymptomatic OSA.
+ However, OSA is usually unrecognized and undiagnosed, and is likely to
+ result in a large population-level health care burden 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Young2002"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Unfortunately, OSA is expensive to diagnose.
+ The 
+\begin_inset Quotes eld
+\end_inset
+
+gold standard
+\begin_inset Quotes erd
+\end_inset
+
+ diagnosis requires several nights of instrumented sleep in a hospital and
+ manual examination of the resulting polysomnogram (PSG) traces.
+ It is not even easy to tell when a sleep study would be useful, as the
+ symptoms are often dismissed or mistaken as being caused by something else.
+ There are portable monitoring devices which can mitigate the cost and inconveni
+ence of a sleep study, and achieve diagnostic agreement of between 91% and
+ 75% 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Santos-Silva2009"
+
+\end_inset
+
+, but these still represent a significant cost in sensor hardware and are
+ not widely used.
+\end_layout
+
+\begin_layout Standard
+Snoring sounds carry information about sleep apnea events 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Ng2008,Fiz2010,Sola-Soler2007"
+
+\end_inset
+
+.
+ Hardware capable of recording and processing audio is ubiquitous in the
+ form of smartphones, tablets, and notebooks.
+ If a reliable algorithm to detect apnea-hypopnea events based only on snoring
+ sounds were could be developed, it could be widely deployed to allow easy
+ self-screening for a large fraction of the population.
+\end_layout
+
+\begin_layout Standard
+Convolutional neural networks (CNNs) are a type of deep neural architecture
+ which has been successfully applied to many different classification and
+ recognition tasks.
+ I propose the use of such a network to recognize sleep apnea events in
+ snore-related sound recordings.
 \end_layout
 
 \begin_layout Section
+Related Work
+\end_layout
+
+\begin_layout Standard
+Current approaches to detecting sleep apnea events are mostly based on spectral
+ analysis; they include:
+\end_layout
+
+\begin_layout Itemize
+linear predictive coding to model formant frequencies (88% sensitivity,
+ 82% specificity); 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Ng2008"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+logistic regression on snore waveform parameters: pitch, power spectral
+ density, formant frequency and amplitude, 1st derivatives of these, etc.
+ (>93% sensitivity, 73-88% specificity); 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Sola-Soler2007"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+ad hoc analysis of power spectrum peaks (93% sensitivity; 67% specificity)
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Nakano2004"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Higher specificity would be desirable to reduce false-positive costs in
+ a method intended for wide application.
+ Furthermore, the above cited methods all use the signal from a tracheal
+ microphone, the use of which is not feasible in the intended application
+ (since a tracheal microphone is not a common household item).
+\end_layout
+
+\begin_layout Section
+Model
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/lenet-figure.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:LeNet"
+
+\end_inset
+
+An example of a LeNet model for image recognition.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I used a simplified LeNet-like
+\begin_inset CommandInset citation
+LatexCommand cite
+key "LeCun1998"
+
+\end_inset
+
+ convolutional neural network.
+ The input is a 300x300 real-valued image computed using a Short-Time Fourier
+ Transform (STFT) of the raw audio (see 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Data"
+
+\end_inset
+
+).
+ The first four hidden layers alternate between convolution and subsampling
+ layers.
+ Above these is one fully-connected sigmoidal layer followed by a final
+ logistic regression layer.
+ A similar model is shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:LeNet"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Part of my motivation for choosing this type of model was that it works
+ well for image recognition, and a spectrogram (i.e., an STFT window) is an
+ image that can be used to isolate spectral features of an audio recording.
+ The other part was that this type of deep architecture seemed the easiest
+ to understand and implement given my background (as opposed to, say, RBM-based
+ models).
+\end_layout
+
+\begin_layout Standard
+Each convolution layer consists of a small fixed number of feature maps.
+ Each feature map produces an output image by convolving its input image(s)
+ by a parameter kernel 
+\begin_inset Formula $W$
+\end_inset
+
+, adding a parameter bias vector 
+\begin_inset Formula $b$
+\end_inset
+
+, and applying a sigmoidal (tanh) nonlinearity.
+ The convolution kernel of a feature map is thus 3-dimensional, having the
+ axes <input image index, x-position, y-position>, and the weights of a
+ layer (composed of several feature maps) form a 4-dimensional tensor.
+\end_layout
+
+\begin_layout Standard
+The sub-sampling layers have no parameters.
+ They merely implement a 
+\begin_inset Quotes eld
+\end_inset
+
+max-pooling
+\begin_inset Quotes erd
+\end_inset
+
+ operation.
+ Each subsampling layer has one hyperparameter, the pool size, which in
+ most models is simply two.
+ Max-pooling consists of dividing each input image into a nonoverlapping
+ uniform grid, each cell being pool-size wide in both dimensions.
+ The maximum of each cell's elements becomes the output of that cell.
+ With a pool size of 
+\begin_inset Formula $m$
+\end_inset
+
+, this effectively scales down each input image by a factor of 
+\begin_inset Formula $1/m$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The max-pooling step is actually implemented using a softmax function, which
+ permits the use of gradient descent through the subsampling layers.
+\end_layout
+
+\begin_layout Standard
+After the final subsampling layer is a tanh-activation layer fully connected
+ with the outputs of the layer below it, just as you would see in any multilayer
+ perceptron.
+ On top of that is a logistic regression layer, which performs the final
+ classification.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Data"
+
+\end_inset
+
 Data
 \end_layout
 
@@ -90,39 +366,45 @@ The training data consists of a set of audio recordings of snoring and sleep
 \end_layout
 
 \begin_layout Standard
-I performed some preprocessing to extract (hopefully) more useful features
- from the raw audio data.
+I performed some preprocessing to extract (hopefully) useful features from
+ the raw audio data.
  The first step is to compute a Short-Time Fourier Transform (STFT) of the
  audio signal.
  This turns the one-dimensional time-domain data into a two-dimensional
- time- and frequency-domain image.
+ time- and frequency-domain image, known as a spectral waterfall or spectrogram.
  The first Fourier coefficient (the DC offset) is discarded from each row,
  as well as all of the high-frequency coefficients above the frequency range
  of snoring and breathing sounds.
  This truncated image is then subdivided into sequential, overlapping windows
  of around 15 seconds each.
+ Each window image is then padded on the left and right sides (along the
+ time axis) with 10 rows of zeroes.
+ This ensures that features near the edge of the image can still be detected
+ by a convolution kernel.
  See 
 \begin_inset CommandInset ref
 LatexCommand formatted
-reference "sec:Implementation"
+reference "sec:Parameters"
 
 \end_inset
 
- for the exact parameters; I tried to choose them so that the resulting
- windows are square, reasonably small, and informative.
+ for the exact parameters of these steps; I tried to choose them so that
+ the resulting windows are square, reasonably small, and informative.
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-TODO: show pipeline
-\end_layout
+Finally, the windows are classified according to which type of sleep apnea
+ event, if any, occurs inside them.
+ Although windows overlap, events never occurred close enough together in
+ the data set to cause ambiguity.
+ See figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:examples"
 
 \end_inset
 
-
+ for an example of what they look like.
 \end_layout
 
 \begin_layout Subsection
@@ -132,14 +414,11 @@ UNC Sleep Lab
 \begin_layout Standard
 The UNC-CH Sleep Lab performs routine sleep studies and collects polysomnograms
  (PSGs) with audio and video channels.
- The PSGs are manually annotated for apnea-hypopnea events based on these
- criteria: 
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-TODO: Insert definition of apnea/hypopnea event from sheet
-\end_layout
+ The PSGs are manually annotated for apnea-hypopnea events based on the
+ criteria listed in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:Rules-for-scoring"
 
 \end_inset
 
@@ -152,6 +431,17 @@ TODO: Insert definition of apnea/hypopnea event from sheet
 \end_layout
 
 \begin_layout Standard
+Most subjects are recorded for two nights: one to adjust to sleeping in
+ the hospital environment, and one used for an actual diagnosis.
+ Some subjects are healthy, and others have varying types and severities
+ of sleep apnea.
+ The audio data was recorded using a microphone (of unknown specifications)
+ mounted in the ceiling 56 inches directly above the pillow, pointing down.
+ In addition to sleep sounds, the recordings also contain ambient noise
+ from air conditioning, hospital systems, television, and conversations.
+\end_layout
+
+\begin_layout Standard
 The annotations consist of several different types of events: obstructive
  apnea (OA), obstructive apnea with arousal (OAa), obstructive hypopnea
  (OH), obstructive hypopnea with arousal (OHa), central apnea (CA), central
@@ -161,11 +451,21 @@ The annotations consist of several different types of events: obstructive
 \end_layout
 
 \begin_layout Standard
-For the purposes of this experiment, the body position changes were ignored,
- leaving the distribution shown in 
+The annotated data set did not contain any CH events.
+ The body position changes were irrelevant.
+ This leaves the distribution of training examples (after preprocessing
+ and windowing) shown in 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "tab:class-counts"
+
+\end_inset
+
+.
+ An example of each class is shown in figure 
+\begin_inset CommandInset ref
+LatexCommand vref
+reference "fig:examples"
 
 \end_inset
 
@@ -176,21 +476,83 @@ reference "tab:class-counts"
 \begin_inset Float table
 wide false
 sideways false
-status open
+status collapsed
+
+\begin_layout Description
+Apnea 90% or more decrease on NASAL channel for at least 10 seconds
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\emph on
+Central
+\emph default
+ - absence of airflow and effort.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+Obstructive
+\emph default
+ - absence of airflow and decreased effort.
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+Mixed
+\emph default
+ - initial absence of airflow and effort followed by effort in Abdomen and
+ Chest channels.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+Hypopnea Decrease in NASAL, but partly reduced (at least 30%) in PNASAL
+ and 4% desaturation in SpO2 channel within 10-20 seconds after the respiratory
+ event.
+\end_layout
+
+\begin_layout Description
+RERA Not flat in NASAL, 50% reduction in PNASAL, end either an arousal or
+ 3% desaturation.
+ In REM, arousal is a chin EMG change; in NREM, need 3 seconds of alpha
+ waves in EEG.
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:Rules-for-scoring"
+
+\end_inset
+
+Rules for scoring respiratory events
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status collapsed
 
 \begin_layout Plain Layout
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="2" columns="10">
+<lyxtabular version="3" rows="11" columns="2">
 <features tabularvalignment="middle">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
-<column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <column alignment="center" valignment="top" width="0">
 <row>
@@ -198,79 +560,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-(no event)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-RERA
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-OAa
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-CAa
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-OHa
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-CHa
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-OA
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-CA
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-OH
+Class
 \end_layout
 
 \end_inset
@@ -279,7 +569,187 @@ OH
 \begin_inset Text
 
 \begin_layout Plain Layout
-CH
+Count
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+(no event)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+131725
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+RERA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4263
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OAa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7707
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CAa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+774
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OHa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3954
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CHa
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+78
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+142
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+CA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+41
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+OH
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+754
 \end_layout
 
 \end_inset
@@ -290,79 +760,7 @@ CH
 \begin_inset Text
 
 \begin_layout Plain Layout
-65192
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-2277
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-4150
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-421
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-2142
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-45
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-76
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-27
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-396
+CH
 \end_layout
 
 \end_inset
@@ -394,8 +792,53 @@ name "tab:class-counts"
 
 \end_inset
 
-Number of training examples in each class (i.e., number of STFT windows containing
- each event type).
+Number of training examples in each class
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement p
+wide true
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/real-examples.png
+	width 90text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:examples"
+
+\end_inset
+
+One randomly chosen example from each class (except CH, which was not present
+ in the data).
+ Starting from the upper left and proceeding by rows, the classes are: no
+ event, RERA, OAa, CAa, OHa, CHa, OA, CA, OH.
+ The horizontal axis is frequency.
+ The vertical axis is time.
 \end_layout
 
 \end_inset
@@ -409,18 +852,24 @@ Number of training examples in each class (i.e., number of STFT windows containi
 \end_layout
 
 \begin_layout Subsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Synthetic"
+
+\end_inset
+
 Synthetic
 \end_layout
 
 \begin_layout Standard
-I used basic audio processing software to construct a simple synthetic data
- set for testing.
+I used freely available audio processing software to construct a simple
+ synthetic data set for testing.
  The construction was as follows:
 \end_layout
 
 \begin_layout Itemize
-Brownian noise, amplitude 0.1.
- This type of noise was chosen because it sounded similar to the background
+A background of Brownian noise at amplitude 0.1.
+ This type of noise was chosen because it sounds similar to the background
  noise in the real data.
 \end_layout
 
@@ -429,16 +878,16 @@ DTMF tones, amplitude 0.01, duty cycle 30%, pattern
 \begin_inset Quotes eld
 \end_inset
 
-12121212121...
+1,2,1,2,1,2,1,...
 \begin_inset Quotes erd
 \end_inset
 
 .
- This is intended to be sort of like soft breathing sounds: a slow repeating
- pattern, alternating between two frequencies, with pauses.
+ This is intended to approximately imitate soft breathing sounds: a slow
+ repeating pattern, alternating between two frequencies, with pauses.
  The chosen amplitude is between 0-10dB above the noise floor in the DTMF
  frequency range.
- DTMF tones were used because they were easy to generate in this particular
+ DTMF tones were used because they were easy to generate with this particular
  software package.
 \end_layout
 
@@ -468,32 +917,229 @@ breathing
  Unlike the real data, there is no variation in the breathing pattern's
  rate, pitch, timbre, or whatever unknown quality might denote an imminent
  apnea event.
- There is also no structured environmental noise and no tossing-and-turning
- sound.
+ There is no structured environmental noise and no tossing-and-turning sound.
+ There are only two classes of event: apnea and normal breathing, as opposed
+ to the nine classes in the real data set.
 \end_layout
 
 \begin_layout Section
-Model
+Training
 \end_layout
 
 \begin_layout Standard
-I used a Convolutional Neural Network (CNN) model based on a simplified
- version of LeNet5
+The overall training algorithm is stochastic gradient descent (SGD), with
+ the cost function being the negative log-likelihood of a batch of predictions
+ from the logistic regression output layer; 
+\begin_inset Formula $LL(\theta)=-\sum_{i}\log p_{\theta}(y_{i}|x_{i})$
+\end_inset
+
+.
+ I made use of the symbolic differentiation capabilities of Theano
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bergstra+al:2010-scipy"
+
+\end_inset
+
+ to derive the gradient of each parameter with respect to this cost throughout
+ the model.
+\end_layout
+
+\begin_layout Standard
+In my initial tests using simple gradient descent (also known as backpropagation
+), I found that the performance of this model on the synthetic data set
+ was extremely sensitive to the learning rate and batch size parameters,
+ so much so that I was having trouble getting reliable convergence at all.
+ Implementing the 
+\shape smallcaps
+Rprop
+\shape default
+ algorithm 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Riedmiller1994"
+
+\end_inset
+
+ solved my convergence issues and eliminated the need to carefully tune
+ the learning rate.
+\end_layout
+
+\begin_layout Standard
+The complete set of hyperparameters is listed below.
+\end_layout
+
+\begin_layout Subsection*
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Parameters"
+
+\end_inset
+
+Data preprocessing parameters
+\end_layout
+
+\begin_layout Itemize
+STFT width: 150 milliseconds.
+\end_layout
+
+\begin_layout Itemize
+STFT stride: 50 milliseconds.
+\end_layout
+
+\begin_layout Itemize
+STFT windowing function: Hamming (raised cosine).
+ This was chosen to maximize frequency resolution.
+\end_layout
+
+\begin_layout Itemize
+Number of high-frequency STFT coefficients to discard: 600 (that is, two-thirds
+ of them).
+ This step combined with the wide STFT has the effect of magnifying all
+ the features which occur in the low- to mid-frequency range.
+ Hopefully those are the interesting ones.
+\end_layout
+
+\begin_layout Itemize
+Image downsampling factor: 1 (no downsampling).
+\end_layout
+
+\begin_layout Itemize
+Image window width: 14 seconds.
+ Chosen so that most apnea events can fit completely inside the window.
+\end_layout
+
+\begin_layout Itemize
+Image window stride: 2.5 seconds.
+ One second or even half a second would have been better, but I did not
+ have the computational resources to support further doubling of the data
+ set.
+\end_layout
+
+\begin_layout Itemize
+Image window padding: 10 pixels on the left and right (the time axis), none
+ on the top and bottom (the frequency axis).
+\end_layout
+
+\begin_layout Standard
+These shape parameters result in windows of size 300x300, each overlapping
+ by a large margin with its neighbors.
+ The total number of examples (windows) across all annotated audio files
+ is 149,448 (see 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:class-counts"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsection*
+Network topology parameters
+\end_layout
+
+\begin_layout Itemize
+CNN kernel sizes: [15,6,5].
+ These were guessed to hopefully match the feature size at each layer.
+\end_layout
+
+\begin_layout Itemize
+CNN max-pool sizes: [2,2,2].
+\end_layout
+
+\begin_layout Itemize
+Number of kernels per layer: [4,16,64].
+ These were chosen so that the total number of parameters in each layer
+ would be approximately constant.
+\end_layout
+
+\begin_layout Itemize
+Sigmoid layer size: 500.
+ Of uncertain provenance and significance.
+\end_layout
+
+\begin_layout Subsection*
+Training parameters
+\end_layout
+
+\begin_layout Itemize
+Initial 
+\shape smallcaps
+Rprop
+\shape default
+ learning rates: 
+\begin_inset Formula $\Delta\leftarrow0.005$
+\end_inset
+
+.
+ Not critical, but should be kept reasonably small.
+\end_layout
+
+\begin_layout Itemize
+
+\shape smallcaps
+Rprop 
+\shape default
+parameters:
+\shape smallcaps
+ 
+\begin_inset Formula $\eta^{-}=0.5$
+\end_inset
+
+, 
+\begin_inset Formula $\eta^{+}=1.2$
+\end_inset
+
+, 
+\begin_inset Formula $\Delta_{min}=10^{-6}$
+\end_inset
+
+, 
+\begin_inset Formula $\Delta_{max}=50$
+\end_inset
+
+.
+ 
+\shape default
+All noncritical and as suggested in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Riedmiller1994"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Training set: 6000 total examples, distributed equally between classes but
+ otherwise selected at random.
+ Some classes do not have enough examples to meet this quota; the shortfall
+ is made up with no-event examples.
+\end_layout
+
+\begin_layout Itemize
+Validation and test sets: 1000 examples each, selected in the same way as
+ the training set.
+\end_layout
+
+\begin_layout Itemize
+Minibatch size: 500.
+ The more the better, but memory usage increases.
+ The training set is randomly reshuffled out to the minibatches every epoch.
+\end_layout
+
+\begin_layout Itemize
+Maximum training epochs: 100.
 \end_layout
 
 \begin_layout Section
 Implementation
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:Implementation"
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
-The implementation was done in Python, making use of the Theano
+The implementation was done in Python2.7, making use of the Theano
 \begin_inset CommandInset citation
 LatexCommand cite
 key "bergstra+al:2010-scipy"
@@ -517,117 +1163,1029 @@ target "http://deeplearning.net/software/theano/"
 
 \end_inset
 
- library and example code from deeplearning.net.
-\end_layout
-
-\begin_layout Standard
-Data preprocessing parameters:
-\end_layout
-
-\begin_layout Itemize
-STFT width: 100 milliseconds (1200 samples).
-\end_layout
-
-\begin_layout Itemize
-STFT stride: 50 milliseconds (600 samples).
-\end_layout
-
-\begin_layout Itemize
-Number of high-frequency STFT coefficients to discard: 300 (that is, half).
-\end_layout
-
-\begin_layout Itemize
-Image downsampling factor: 1 (no downsampling).
-\end_layout
-
-\begin_layout Itemize
-Image window width: 15 seconds.
-\end_layout
-
-\begin_layout Itemize
-Image window stride: 5 seconds.
-\end_layout
-
-\begin_layout Standard
-These shape parameters result in windows of size 300x300, each overlapping
- by two-thirds with the next.
- The total number of examples (windows) across all audio files is 74726,
- of which 9035 are positive (contain an event) and 65691 are negative.
-\end_layout
-
-\begin_layout Standard
-Network topology parameters:
-\end_layout
-
-\begin_layout Itemize
-CNN filter sizes: [5,5]
-\end_layout
-
-\begin_layout Itemize
-CNN maxpool sizes: [2,2]
-\end_layout
-
-\begin_layout Itemize
-Number of kernels per layer: [20,50]
-\end_layout
-
-\begin_layout Itemize
-Sigmoid layer size: 500
-\end_layout
-
-\begin_layout Standard
-Training regimen parameters:
-\end_layout
-
-\begin_layout Itemize
-Learning rate: 0.1, divided by the number of minibatches per epoch.
-\end_layout
-
-\begin_layout Itemize
-Number of positive examples in the training set: 2000.
-\end_layout
-
-\begin_layout Itemize
-Number of negative examples in the training set: 2000.
-\end_layout
-
-\begin_layout Itemize
-Minibatches per epoch: 200.
-\end_layout
-
-\begin_layout Itemize
-Maximum training epochs: 20.
+ library and some code from deeplearning.net.
+ Although Theano has the ability to transparently move computations to a
+ GPU, mine unfortunately lacked sufficient video memory, so all of my processing
+ was done on a four-core 3.4GHz AMD processor, using approximately 8GB of
+ RAM.
 \end_layout
 
 \begin_layout Section
 Results
 \end_layout
 
-\begin_layout Itemize
-synthetic data set 10% error (TODO: get spec/rec)
+\begin_layout Standard
+For lack of easy access to anything more sophisticated, I compared my model
+ to a basic logistic regression + 
+\shape smallcaps
+Rprop
+\shape default
+.
+ The logistic regression model achieved 8% validation error on the synthetic
+ data set, but only 68% on the real data (figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Logistic-regression"
+
+\end_inset
+
+).
+ My CNN model achieved 1.5% validation error on the synthetic data set (figure
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Synth-rprop"
+
+\end_inset
+
+), and 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+update
 \end_layout
 
-\begin_layout Itemize
-highly dependent on learning rate and batch size
+\end_inset
+
+70% on the real data after 18 training epochs.
+ Alas, at the time of this writing, I cannot know how it might perform with
+ a longer training period, because I only got the last major bugs ironed
+ out 12 hours ago and the training process is still running.
 \end_layout
 
-\begin_layout Itemize
-batch size couldn't be made large due to memory constraints
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/logistic-real.png
+	width 50col%
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Itemize
-wish i could do a search over this parameter space
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Logistic-regression"
+
+\end_inset
+
+Logistic regression + 
+\shape smallcaps
+Rprop
+\shape default
+ trained on the real data set.
+ The final validation error is 68.5%.
 \end_layout
 
-\begin_layout Section*
-References
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/synth-rprop.png
+	width 50col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Synth-rprop"
+
+\end_inset
+
+CNN model trained on 1000 examples from the synthetic data set (
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sub:Synthetic"
+
+\end_inset
+
+).
+ The final validation error is 1.5%.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Tabular
+<lyxtabular version="3" rows="9" columns="9">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<column alignment="center" valignment="top" width="0">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+173
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+18
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+104
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+59
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+33
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+33
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+69
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+86
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+16
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+36
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+23
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+98
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+23
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+84
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+24
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Confusion matrix of the CNN model after 18 training epochs.
+ Each row represents the predictions made for that class.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Discussion
+\end_layout
+
+\begin_layout Standard
+Working with the assumption for now that my model will only ever achieve
+ 70% error, I suspect that the culprit is my network topology hyperparameters.
+ If I had another week I'd either make some more guesses or do an exhaustive
+ search.
+\end_layout
+
+\begin_layout Standard
+Maybe the problem is that this data set really doesn't support making prediction
+s of sleep apnea events.
+\end_layout
+
+\begin_layout Standard
+Regardless, it fairly clear that my synthetic data set is too easy.
+\end_layout
+
+\begin_layout Section
+Future Work
+\end_layout
+
+\begin_layout Standard
+The model is currently very large in terms of the number of parameters to
+ be learned.
+ Mostly this is because I wasn't sure how to design an appropriate CNN topology
+ for this problem, and went with a liberal guess.
+ A grid search over the hyperparameters to find the smallest effective model
+ may prove fruitful, if time-consuming.
+\end_layout
+
+\begin_layout Standard
+A smaller model would also be faster to evaluate, and vital if a mobile
+ application is in the future.
+\end_layout
+
+\begin_layout Standard
+It may have been helpful to make use of the unlabeled data as well as the
+ annotated recordings.
+ In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Lee2009"
+
+\end_inset
+
+ Lee describes a 
+\begin_inset Quotes eld
+\end_inset
+
+Convolutional DBN
+\begin_inset Quotes erd
+\end_inset
+
+ architecture for semi-supervised learning of subtle spectrogram features
+ such as the gender of a speaker, which may be well-applicable to this task.
+\end_layout
+
+\begin_layout Standard
+All of the recordings in the data set were taken in the same few identical
+ rooms, with the same type of microphone, in the same hospital's ambient
+ noise environment.
+ It remains to be seen how well or poorly the trained model would perform
+ in a novel environment.
+ Perhaps augmenting the data set with noisy or cleverly re-filtered versions
+ of the audio signals would be effective, if performance is poor.
+\end_layout
+
+\begin_layout Standard
+The Apnea-Hypopnea Index is the actual diagnostic measure used in rating
+ severity of sleep apnea.
+ It is a count of apnea and hypopnea events per hour.
+ An algorithm still needs to be designed to transform the output of the
+ trained model into a single AHI value.
+\end_layout
+
+\begin_layout Section
+Acknowledgments
+\end_layout
+
+\begin_layout Standard
+I thank Dr.
+ Heidi Roth and Chayla Hart at the UNC Sleep Lab for their efforts in collecting
+ this data set and their assistance in grooming and deciphering it.
 \end_layout
 
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 bibfiles "/home/gmaslov/Mendeley/library,/home/gmaslov/Mendeley/misc"
-options "unsrt"
+options "ieeetr"
 
 \end_inset
 

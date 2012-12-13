@@ -11,7 +11,7 @@ from deeplearning.mlp import HiddenLayer
 from deeplearning.logistic_sgd import LogisticRegression
 from unc_sdl import load_datasets
 
-# Rprop algorithm. Hooray for Rprop!
+# Rprop algorithm. Technically "iRPROP-", according to the 2000 paper of Igel and Husken
 def rprop_updates(cost, params):
     initial_rprop_rate=0.005
     minimum_rprop_rate=1e-6
