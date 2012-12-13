@@ -75,8 +75,8 @@ Greg Maslov
 I propose a Convolutional Neural Network model to automatically detect and
  classify sleep apneas and hypopneas using only unsophisticated, noisy audio
  recordings of snore-related sounds using a general-purpose microphone.
- I evaluate the model on a data set from the UNC Sleep Lab and discuss future
- work.
+ I evaluate the model on a data set from the UNC Sleep Lab, obtain a disappointi
+ng result, and discuss future work.
 \end_layout
 
 \begin_layout Section
@@ -1146,24 +1146,7 @@ key "bergstra+al:2010-scipy"
 
 \end_inset
 
-
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-Available at 
-\begin_inset CommandInset href
-LatexCommand href
-target "http://deeplearning.net/software/theano/"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
- library and some code from deeplearning.net.
+ library.
  Although Theano has the ability to transparently move computations to a
  GPU, mine unfortunately lacked sufficient video memory, so all of my processing
  was done on a four-core 3.4GHz AMD processor, using approximately 8GB of
@@ -1176,7 +1159,7 @@ Results
 
 \begin_layout Standard
 For lack of easy access to anything more sophisticated, I compared my model
- to a basic logistic regression + 
+ to logistic regression + 
 \shape smallcaps
 Rprop
 \shape default
@@ -1198,20 +1181,14 @@ reference "fig:Synth-rprop"
 
 \end_inset
 
-), and 
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-update
-\end_layout
+), but only 70% on the real data (figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Training-the-CNN"
 
 \end_inset
 
-70% on the real data after 18 training epochs.
- Alas, at the time of this writing, I cannot know how it might perform with
- a longer training period, because I only got the last major bugs ironed
- out 12 hours ago and the training process is still running.
+).
 \end_layout
 
 \begin_layout Standard
@@ -1305,7 +1282,7 @@ reference "sub:Synthetic"
 \begin_inset Float figure
 wide false
 sideways false
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \align center
@@ -2079,12 +2056,61 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Confusion matrix of the CNN model after 18 training epochs.
- Each row represents the predictions made for that class.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Confusion-matrix"
+
+\end_inset
+
+Confusion matrix of the trained CNN model.
+ Each row represents the predictions made for that class in the test set,
+ in order (none, RERA, OAa, CAa, OHa, CHa, OA, CA, OH).
 \end_layout
 
 \end_inset
 
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename figures/real-rprop.png
+	width 50col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Training-the-CNN"
+
+\end_inset
+
+Training the CNN model on the real data set.
+ The final validation error is 70%.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
 
 \end_layout
 
@@ -2098,19 +2124,48 @@ Discussion
 \end_layout
 
 \begin_layout Standard
-Working with the assumption for now that my model will only ever achieve
- 70% error, I suspect that the culprit is my network topology hyperparameters.
- If I had another week I'd either make some more guesses or do an exhaustive
+I'm disappointed.
+ I suspect that the culprit is my network topology or data preprocessing
+ hyperparameters.
+ If I had more time I'd either make some more guesses or do an exhaustive
  search.
 \end_layout
 
 \begin_layout Standard
-Maybe the problem is that this data set really doesn't support making prediction
-s of sleep apnea events.
+The confusion matrix (figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Confusion-matrix"
+
+\end_inset
+
+) seems to show that the most reliable positive predictions are made for
+ class 3, 
+\begin_inset Quotes eld
+\end_inset
+
+central apnea with arousal
+\begin_inset Quotes erd
+\end_inset
+
+, which is surprising.
+ I expected the obstructive apneas, OA and OAa, to be the most easily recognizab
+le based on the accompanying snorting and gasping sounds.
 \end_layout
 
 \begin_layout Standard
-Regardless, it fairly clear that my synthetic data set is too easy.
+Memory, CPU, and disk constraints prevented me from training on the full
+ data set.
+ Perhaps a longer training run, using all the examples rather than a relatively
+ small random sample, would do better.
+ Unfortunately the present rate of training is over 30 minutes per epoch,
+ precluding any more experimentation before the deadline for this report.
+\end_layout
+
+\begin_layout Standard
+Maybe the problem is that this data set simply doesn't support predictions
+ of sleep apnea events.
+ Regardless, it is fairly clear that my synthetic data set was too easy.
 \end_layout
 
 \begin_layout Section
@@ -2121,14 +2176,14 @@ Future Work
 The model is currently very large in terms of the number of parameters to
  be learned.
  Mostly this is because I wasn't sure how to design an appropriate CNN topology
- for this problem, and went with a liberal guess.
+ for this problem, and went with my first liberal guess.
  A grid search over the hyperparameters to find the smallest effective model
  may prove fruitful, if time-consuming.
 \end_layout
 
 \begin_layout Standard
-A smaller model would also be faster to evaluate, and vital if a mobile
- application is in the future.
+A smaller model would also be faster to train and evaluate, and vital if
+ a mobile application is in the future.
 \end_layout
 
 \begin_layout Standard
@@ -2157,7 +2212,7 @@ Convolutional DBN
 All of the recordings in the data set were taken in the same few identical
  rooms, with the same type of microphone, in the same hospital's ambient
  noise environment.
- It remains to be seen how well or poorly the trained model would perform
+ It remains to be seen how well or poorly a trained model would perform
  in a novel environment.
  Perhaps augmenting the data set with noisy or cleverly re-filtered versions
  of the audio signals would be effective, if performance is poor.
@@ -2184,7 +2239,7 @@ I thank Dr.
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
-bibfiles "/home/gmaslov/Mendeley/library,/home/gmaslov/Mendeley/misc"
+bibfiles "/home/maslov/Mendeley/library"
 options "ieeetr"
 
 \end_inset
